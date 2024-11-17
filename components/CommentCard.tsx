@@ -1,10 +1,10 @@
 import { StyleSheet, Text, View } from 'react-native'
 import React from 'react'
 
-export default function index() {
+export default function CommentCard() {
   return (
     <View>
-      <Text>index</Text>
+      <Text>CommentCard</Text>
     </View>
   )
 }

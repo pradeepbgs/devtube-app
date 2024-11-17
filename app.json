@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "devtube-app",
-    "slug": "devtube-app",
+    "slug": "devtube",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
@@ -36,6 +36,15 @@
     ],
     "experiments": {
       "typedRoutes": true
-    }
+    },
+    "extra": {
+      "router": {
+        "origin": false
+      },
+      "eas": {
+        "projectId": "ebfa9b1d-950c-4e7c-8d34-a657ac87b151"
+      }
+    },
+    "owner": "exvillager"
   }
 }

@@ -1,12 +1,14 @@
 import { StyleSheet, Text, View } from 'react-native'
 import React from 'react'
 
-export default function index() {
+const _layout = () => {
   return (
     <View>
-      <Text>index</Text>
+      <Text>_layout</Text>
     </View>
   )
 }
+
+export default _layout
 
 const styles = StyleSheet.create({})

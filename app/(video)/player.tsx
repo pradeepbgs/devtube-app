@@ -1,10 +1,10 @@
 import { StyleSheet, Text, View } from 'react-native'
 import React from 'react'
 
-export default function index() {
+export default function player() {
   return (
     <View>
-      <Text>index</Text>
+      <Text>player</Text>
     </View>
   )
 }

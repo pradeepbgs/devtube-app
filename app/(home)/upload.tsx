@@ -1,10 +1,10 @@
 import { StyleSheet, Text, View } from 'react-native'
 import React from 'react'
 
-export default function subscriptions() {
+export default function upload() {
   return (
     <View style={styles.container}>
-      <Text>subscriptions</Text>
+      <Text>upload video </Text>
     </View>
   )
 }

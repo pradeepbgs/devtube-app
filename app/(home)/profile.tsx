@@ -1,17 +1,16 @@
 import { StyleSheet, Text, View } from 'react-native'
 import React from 'react'
-
-export default function subscriptions() {
+import ProfileIndex from '@/app/(profile)/index'
+export default function profile() {
   return (
     <View style={styles.container}>
-      <Text>subscriptions</Text>
+      <ProfileIndex />
     </View>
   )
 }
 
 const styles = StyleSheet.create({
-  container:{
-    flex:1,
-    backgroundColor:'black'
+  container: {
+    backgroundColor: "black",
   }
 })

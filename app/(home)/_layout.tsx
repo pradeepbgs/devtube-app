@@ -1,10 +1,41 @@
-import { Tabs } from "expo-router";
+import { Link, Tabs, useRouter, useSegments } from "expo-router";
 import Ionicons from "@expo/vector-icons/Ionicons";
-import { Image, StyleSheet } from "react-native";
+import { Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import AntDesign from '@expo/vector-icons/AntDesign'; 
 
 export default function HomeLayout() {
+  const segments = useSegments()
+  const router = useRouter();
+  let isHomePage = true
+  if (segments.length > 1){
+    isHomePage = false
+  }
+
   return (
+    <View style={styles.container}>
+      {
+        isHomePage && (
+          <View style={styles.header}>
+            <Link
+            href={"/"}
+            style={styles.logo}
+            >
+            <Image
+            resizeMode="contain"
+            source={{ uri: "https://upload.wikimedia.org/wikipedia/commons/e/ef/Youtube_logo.png" }}
+            style={styles.logo}
+          />
+            </Link>
+          
+          
+          <TouchableOpacity 
+          style={styles.notificationIcon}
+          onPress={() => router.push('/(notication)/notification')}>
+            <Ionicons name="notifications" size={24} color="white" />
+          </TouchableOpacity>
+        </View>
+        )
+      }
     <Tabs
       screenOptions={{
         tabBarActiveTintColor: "white",
@@ -86,15 +117,24 @@ export default function HomeLayout() {
       />
 
     </Tabs>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   container:{
     flex:1,
-    justifyContent:'center',
-    alignItems:'center',
+    // justifyContent:'center',
+    // alignItems:'center',
     backgroundColor:'black'
+  },
+  header: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingTop: 10,
+    // paddingLeft:5,
+    backgroundColor: "black",
   },
   uploadIcon: {
     fontSize:30,
@@ -103,5 +143,21 @@ const styles = StyleSheet.create({
   },
   searchIcon: {
     borderRadius:100
-  }
+  },
+  text:{
+    color:'white',
+    fontSize:20
+  },
+  logo: {
+    width: 50,
+    height: 30,
+    resizeMode: "contain",
+    paddingLeft:20,
+  },
+  notificationIcon: {
+    marginRight: 20,
+    width: 30,
+    height: 20,
+    resizeMode: "contain",
+  },
 })

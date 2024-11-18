@@ -1,16 +1,21 @@
 import React, { useState, useEffect } from "react";
-import { StyleSheet, View, FlatList, Text, TouchableOpacity, ScrollView } from "react-native";
+import { StyleSheet, View, FlatList, Text, TouchableOpacity, ScrollView , ActivityIndicator} from "react-native";
 import VideoCard from "@/components/VideoCard";
 import axios from "axios";
 
 const suggestionArray = ["All","JavaScript","Programming","Algorithms","Gaming","Videos","Web Development","System Programming"]
 
 export default function Index() {
-  const [videos, setVideos] = useState([]);
-  const [page,setPage] = useState(1);
-  const [loading, setLoading] = useState(false);
-  const [selectedCategory, setSelectedCategory] = useState(null);
+  const [videos, setVideos] = useState<string[]>([]);
+  const [page,setPage] = useState<number>(1);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [nextVideoLoading, setNextVideoLoading] = useState<boolean>(false);
+  const [selectedCategory, setSelectedCategory] = useState<string|null>(null);
+
   const fetchVideos = async () => {
+    const isPagination = page > 1;
+    if (isPagination) setNextVideoLoading(true);
+    else setLoading(true);
 
     try {
       let query = selectedCategory ? selectedCategory : "";
@@ -27,6 +32,7 @@ export default function Index() {
       console.log("Error fetching videos:", error);
     } finally {
       setLoading(false);
+      setNextVideoLoading(false);
     }
   };
 
@@ -43,12 +49,14 @@ export default function Index() {
 
   useEffect(() => {
     fetchVideos();
-  }, [selectedCategory,page]);
+  }, [selectedCategory,page,]);
 
   if (loading) {
     return (
-      <View style={styles.container}>
-        <Text style={styles.text}>Loading videos...</Text>
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator 
+        size="small" color="#00ff00" />
+        {/* <Text style={styles.text}>Loading videos...</Text> */}
       </View>
     );
   }
@@ -87,6 +95,7 @@ export default function Index() {
               <TouchableOpacity 
               style={styles.categoryButton}  
               onPress={() => handleCategorySelect(category)}
+              key={category}
               >
               <Text key={index} style={styles.categoryText}>
                 {category}
@@ -103,6 +112,13 @@ export default function Index() {
         showsVerticalScrollIndicator={false}
         onEndReached={handleEndReached}
         onEndReachedThreshold={0.5}
+        ListFooterComponent={
+          nextVideoLoading ? (
+            <View style={styles.loadingContainer}>
+              <ActivityIndicator size="small" color="#00ff00" />
+            </View>
+          ) : null
+        }
       />
     </View>
   );
@@ -112,9 +128,13 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "black",
-    // alignItems: "center",
-    // justifyContent: "center",
-    paddingTop:15,
+    paddingTop:1,
+  },
+  loadingContainer:{
+    flex:1,
+    justifyContent:"center",
+    alignItems:"center",
+    backgroundColor:"black"
   },
   header: {
     flexDirection: "row",
@@ -132,12 +152,18 @@ const styles = StyleSheet.create({
     fontSize: 18,
   },
   categoryButton: {
-    paddingHorizontal: 15,
+    paddingHorizontal:10,
     paddingVertical: 5,
   },
   categoryText: {
     color: "white",
-    fontSize: 18,
+    fontSize: 15,
     fontWeight: "bold",
+    backgroundColor: '#555',
+    borderRadius: 20,
+    paddingHorizontal: 5,
+    paddingVertical: 5,
+    // marginRight: 10,
   },
+  
 });

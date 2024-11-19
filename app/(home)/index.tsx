@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { StyleSheet, View, FlatList, Text, TouchableOpacity, ScrollView , ActivityIndicator} from "react-native";
 import VideoCard from "@/components/VideoCard";
 import axios from "axios";
-
+import { API_URI } from "@/utils/api";
 const suggestionArray = ["All","JavaScript","Programming","Algorithms","Gaming","Videos","Web Development","System Programming"]
 
 export default function Index() {
@@ -18,8 +18,8 @@ export default function Index() {
     else setLoading(true);
 
     try {
-      let query = selectedCategory ? selectedCategory : "";
-      const response = await axios.get(`http://192.168.0.105:3000/api/v1/videos?page=${page}&query=${query}`, {
+      let query = selectedCategory ?? "";
+      const response = await axios.get(`${API_URI}/api/v1/videos?page=${page}&query=${query}`, {
         withCredentials: true,
       });
       const newVideos = response?.data?.data || [];
@@ -106,6 +106,7 @@ export default function Index() {
           </ScrollView>
       </View>
       <FlatList
+      style={styles.videocard}
         data={videos}
         keyExtractor={(item:any, index) => item?._id ?? index.toString()}
         renderItem={({ item }) => <VideoCard video={item} />}
@@ -139,8 +140,8 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: "row",
     justifyContent: "space-around",
-    paddingVertical: 10,
-    borderBottomWidth: 1,
+    paddingVertical: 5,
+    borderBottomWidth: 0.9,
     borderBottomColor: "#555",
   },
   suggestion:{
@@ -165,5 +166,9 @@ const styles = StyleSheet.create({
     paddingVertical: 5,
     // marginRight: 10,
   },
+  videocard:{
+    marginTop:5
+  }
   
 });
+

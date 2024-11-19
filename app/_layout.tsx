@@ -1,8 +1,11 @@
 import { Stack, Tabs } from "expo-router";
-import { StyleSheet, View, StatusBar, Image } from "react-native";
+import { StyleSheet, View, StatusBar } from "react-native";
+import { Provider } from "react-redux";
+import store from "@/redux/store";
 
 export default function RootLayout() {
   return (
+    <Provider store={store}>
     <View style={styles.container}>
       <StatusBar barStyle={'default'} backgroundColor="black" />
       <Stack
@@ -18,10 +21,12 @@ export default function RootLayout() {
           headerShown: false,
         }} 
         />
-
+        
         <Stack.Screen 
-        name="(profile)" 
-        options={{headerShown:false}}
+        name="(profile)"
+        options={{
+          headerShown:false,
+        }}
         />
 
         <Stack.Screen 
@@ -30,6 +35,7 @@ export default function RootLayout() {
         />
       </Stack>
     </View>
+    </Provider>
   );
 }
 

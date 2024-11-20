@@ -11,7 +11,7 @@ export const signinSchema = z.object({
           message: "Identifier must be a valid email or username.",
         }
       ),
-    password: z.string().min(6, "Password must be at least 6 characters."),
+    password: z.string().min(4, "Password must be at least 4 characters."),
   });
   
 
@@ -23,8 +23,8 @@ export const usernameValidation = z.string()
 export const signUpValidation = z.object({
     username:usernameValidation,
     fullname: z.string().min(3, "fullname must be atleast 3 charachters long"),
-    password: z.string().min(6, "password must be atleast 6 charachters long"),
-    confirmPassword: z.string().min(6, "password must be atleast 6 charachters long"),
+    password: z.string().min(4, "password must be atleast 4 charachters long"),
+    confirmPassword: z.string().min(4, "password must be atleast 4 charachters long"),
     avatar: z.string().url().nonempty(),
     coverImage: z.string().url().optional(),
 }).refine((data) => data.password === data.confirmPassword, {

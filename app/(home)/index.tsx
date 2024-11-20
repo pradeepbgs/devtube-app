@@ -12,7 +12,7 @@ export default function Index() {
   const [nextVideoLoading, setNextVideoLoading] = useState<boolean>(false);
   const [selectedCategory, setSelectedCategory] = useState<string|null>(null);
 
-  const fetchVideos = async () => {
+  const fetchHomeVideos = async () => {
     const isPagination = page > 1;
     if (isPagination) setNextVideoLoading(true);
     else setLoading(true);
@@ -48,7 +48,7 @@ export default function Index() {
   };
 
   useEffect(() => {
-    fetchVideos();
+    fetchHomeVideos();
   }, [selectedCategory,page,]);
 
   if (loading) {

@@ -6,6 +6,11 @@ import { timeAgo } from '@/utils/timeAgo';
 import axios from 'axios';
 import { useSelector } from 'react-redux';
 import { API_URI } from '@/utils/api';
+import * as SecureStore from 'expo-secure-store';
+import AntDesign from '@expo/vector-icons/AntDesign';
+import EvilIcons from '@expo/vector-icons/EvilIcons';
+
+
 
 const { width } = Dimensions.get('window');
 
@@ -17,53 +22,66 @@ export default function Watchpage() {
   const videoData = videoDeatails ? JSON.parse(videoDeatails) : null;
   const createdAgo = timeAgo(videoData?.createdAt);
 
-  const router = useRouter()
+  const router = useRouter();
 
+  // Fetch video details from API
   const getVideoDetails = async () => {
     if (!videoData?._id) return;
+
+    const accessToken = await SecureStore.getItemAsync("accessToken");
+
     try {
-      const response = await axios.get(`${API_URI}/api/v1/videos/${videoData?._id}`, {
+      const response = await axios.get(`${API_URI}/api/v1/videos/${videoData._id}`, {
+        headers: { Authorization: `Bearer ${accessToken}` },
         withCredentials: true,
       });
 
-      if (response) {
-        const video = response.data.data;
-        setVideo(video);
+      if (response.data.data) {
+        setVideo(response.data.data);
       }
     } catch (error) {
-      console.error("Error fetching data:", error);
+      console.error("Error fetching video details:", error);
     }
   };
 
-  const toggleSubscribe = async (channelId:any) => {
-    if(!isLoggedIn){
-      alert("Please login to subscribe");
+  // Toggle subscribe/unsubscribe functionality
+  const toggleSubscribe = async (channelId: any) => {
+    if (!isLoggedIn) {
+      router.push('/(auth)/login')
       return;
     }
     if (!channelId) return;
-    try {
-        const response = await axios.post(
-          `http://192.168.0.105:3000/api/v1/subscriptions/c/${channelId}`,
-          null,
-          { withCredentials: true }
-        );
-        if(response.data.message === "subscribed successfully"){
-          setVideo((prevVideo:any) => ({
-            ...prevVideo,
-            isSubscribe: true,
-          }));
-        }else if(response.data.message === "unsubscribed successfully"){
-          setVideo((prevVideo:any) => ({
-            ...prevVideo,
-            isSubscribe: false,
-          }));
-        }
-    } catch(error:any) {
-        console.error("Error toggling subscribe:", error.response.data);
-    }
-  }
+    const accessToken = await SecureStore.getItemAsync("accessToken");
 
-  const handlePress = (user:any) => {
+    try {
+      const response = await axios.post(
+        `${API_URI}/api/v1/subscriptions/c/${channelId}`,
+        null,
+        {
+          headers: { Authorization: `Bearer ${accessToken}` },
+          withCredentials: true
+        }
+      );
+
+      if (response.data.message === "subscribed successfully") {
+        setVideo((prevVideo: any) => ({
+          ...prevVideo,
+          isSubscribed: true,
+          subscribersCount: prevVideo?.subscribersCount + 1
+        }));
+      } else if (response.data.message === "unsubscribed successfully") {
+        setVideo((prevVideo: any) => ({
+          ...prevVideo,
+          isSubscribed: false,
+          subscribersCount: prevVideo?.subscribersCount - 1
+        }));
+      }
+    } catch (error:any) {
+      alert(`Error toggling subscription: ${JSON.stringify(error.response?.data)}`);
+    }
+  };
+
+  const handlePress = (user: any) => {
     router.push({
       pathname: '/(profile)',
       params: { user: JSON.stringify(user) },
@@ -71,12 +89,8 @@ export default function Watchpage() {
   };
 
   useEffect(() => {
-    if (videoData) {
-      setVideo(videoData);
-    }
     getVideoDetails();
-  }, []);
-
+  }, [videoData?._id]);
   return (
     <View style={styles.container}>
       <VideoScreen url={video?.videoFile} />
@@ -88,7 +102,7 @@ export default function Watchpage() {
         <TouchableOpacity onPress={() => setIsExpanded(!isExpanded)} activeOpacity={0.9}>
           <Text
             style={styles.descriptionText}
-            numberOfLines={isExpanded ? undefined : 2}
+            numberOfLines={isExpanded ? undefined : 1}
           >
             {video?.description || 'No Description'}
           </Text>
@@ -96,7 +110,7 @@ export default function Watchpage() {
         <View style={styles.owner}>
           <View style={styles.ownerContainer}>
             <TouchableOpacity
-            onPress={() => handlePress(video.owner)}
+              onPress={() => handlePress(video.owner)}
             >
               <Image
                 source={{ uri: video?.owner?.avatar }}
@@ -110,12 +124,27 @@ export default function Watchpage() {
               </Text>
             </View>
           </View>
-          <TouchableOpacity style={styles.subscribeButton}>
-            <Text 
+          <TouchableOpacity
+            style={video?.isSubscribed ? styles.subscribeButton : styles.unsubscribeButton}
             onPress={() => toggleSubscribe(video?.owner?._id)}
-            style={styles.subscribeText}>
-              {video?.isSubscribe ? 'Subscribed' : 'Subscribe'}
+          >
+            <Text style={video?.isSubscribed ? styles.subscribeText: styles.unsubscribeText}>
+              {video?.isSubscribed ? 'Subscribed' : 'Subscribe'}
             </Text>
+          </TouchableOpacity>
+        </View>
+        {/* fro like & comment btn  */}
+        <View style={styles.buttonsContainer}>
+          <TouchableOpacity style={styles.likeButton} >
+          <AntDesign 
+          name="like2" size={24} color="white" /> 
+          <Text style={styles.text}>{video?.likesCount}</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.shareButton} >
+          <AntDesign name="sharealt" size={24} color="white" />
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.commentButton} >
+            <EvilIcons name="comment" size={24} color="white" />
           </TouchableOpacity>
         </View>
       </View>
@@ -130,22 +159,22 @@ const styles = StyleSheet.create({
     backgroundColor: 'black',
   },
   textContainer: {
-    padding: 15,
+    padding: 10,
     backgroundColor: 'rgba(0, 0, 0, 0.85)',
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
-    marginTop: -10,
+    // marginTop: -10,
   },
   text: {
     color: 'white',
-    fontSize: 20,
+    fontSize: 18,
     marginBottom: 5,
-    fontWeight: '600',
+    fontWeight: 'bold',
     fontFamily: 'Arial',
   },
   viewsAndTimeText: {
-    color: '#bbb', 
-    fontSize: 16, 
+    color: '#bbb',
+    fontSize: 12,
     fontWeight: '400',
     fontFamily: 'Arial',
   },
@@ -179,13 +208,13 @@ const styles = StyleSheet.create({
   },
   descriptionText: {
     color: 'white',
-    fontSize: 16,
+    fontSize: 13,
     lineHeight: 22,
     fontFamily: 'Arial',
     marginTop: 8,
     backgroundColor: 'rgba(50, 50, 50, 0.6)',
     borderRadius: 10,
-    padding: 4,
+    padding: 5,
   },
   subscribeButton: {
     backgroundColor: '#FF0000',
@@ -193,10 +222,22 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     borderRadius: 20,
   },
+  unsubscribeButton: {
+    backgroundColor: '#ccc',
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 20,
+  },
   subscribeText: {
     color: 'white',
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: '400',
+    textAlign: 'center',
+  },
+  unsubscribeText: {
+    backgroundColor: '#ccc',
+    fontSize: 16,
+    fontWeight: '400',
     textAlign: 'center',
   },
   showMoreText: {
@@ -205,5 +246,42 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     marginTop: 5,
     textAlign: 'right',
+  },
+  buttonsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 15,
+    alignItems: 'center',
+  },
+  likeButton: {
+    flex:1,
+    flexDirection: 'row',
+    paddingVertical: 10,
+    marginHorizontal: 5,
+    borderRadius: 80,
+    backgroundColor: 'grey',
+    padding:20,
+    width:68,
+    height:46
+  },
+  shareButton: {
+    flex: 1,
+    borderRadius: 30,
+    backgroundColor: 'grey',
+    padding:17,
+    width:70,
+    height:55
+  },
+  commentButton: {
+    flex: 1,
+    borderRadius: 80,
+    backgroundColor: 'grey',
+    padding:16,
+    width:69,
+    height:52
+  },
+  buttonText: {
+    color: 'white',
+    fontWeight: 'bold',
   },
 });

@@ -9,22 +9,22 @@ import { API_URI } from '@/utils/api';
 import * as SecureStore from 'expo-secure-store';
 import AntDesign from '@expo/vector-icons/AntDesign';
 import EvilIcons from '@expo/vector-icons/EvilIcons';
-import CommentsPage from '../(comments)';
+import CommentsPage from '../(comments)/comments';
 import VideoCard from '@/components/VideoCard';
-
+import { handleBounce } from '@/utils/bounce';
 
 
 const { width } = Dimensions.get('window');
 
 export default function Watchpage() {
-  const [loading,setLoading] =useState<boolean>(true)
+  const [loading, setLoading] = useState<boolean>(true)
   const [video, setVideo] = useState<any>(null);
   const [suggestionVideos, setsuggestionVideos] = useState<any>(null);
-  const [page , setPage] = useState<number>(1)
+  const [page, setPage] = useState<number>(1)
   const [suggestionVideoLoading, setsuggestionVideoLoading] = useState<boolean>(false)
   const [isExpanded, setIsExpanded] = useState<boolean>(false);
   const { videoDeatails }: any = useLocalSearchParams();
-  const { isLoggedIn } = useSelector((state:any) => state.auth);
+  const { isLoggedIn } = useSelector((state: any) => state.auth);
   const [isCommentOpened, setIsCommentOpened] = useState<boolean>(false)
   const videoData = videoDeatails ? JSON.parse(videoDeatails) : null;
   const createdAgo = timeAgo(videoData?.createdAt);
@@ -51,7 +51,7 @@ export default function Watchpage() {
     } catch (error) {
       console.error("Error fetching video details:", error);
     }
-    finally{
+    finally {
       setLoading(false)
     }
   };
@@ -88,7 +88,7 @@ export default function Watchpage() {
           subscribersCount: prevVideo?.subscribersCount - 1
         }));
       }
-    } catch (error:any) {
+    } catch (error: any) {
       alert(`Error toggling subscription: ${JSON.stringify(error.response?.data)}`);
     }
   };
@@ -99,7 +99,7 @@ export default function Watchpage() {
       return;
     }
     if (!video?._id) return;
-    handleBounce()
+    handleBounce(bounceAnim)
     const accessToken = await SecureStore.getItemAsync("accessToken");
     try {
       const res = await axios.post(`${API_URI}/api/v1/likes/toggle/v/${video?._id}`, null, {
@@ -120,7 +120,7 @@ export default function Watchpage() {
           likesCount: prevVideo?.likesCount - 1
         }));
       }
-    } catch (error:any) {
+    } catch (error: any) {
       alert(`Error toggling subscription: ${JSON.stringify(error.response?.data)}`);
     }
   }
@@ -132,23 +132,11 @@ export default function Watchpage() {
     });
   };
 
-  const handleBounce = () => {
-    Animated.sequence([
-      Animated.timing(bounceAnim, {
-        toValue: 1.3,
-        duration: 150,
-        easing: Easing.out(Easing.ease),
-        useNativeDriver: true,
-      }),
-      Animated.timing(bounceAnim, {
-        toValue: 1,
-        duration: 150,
-        easing: Easing.in(Easing.ease),
-        useNativeDriver: true,
-      }),
-    ]).start();
-  };
+  const handleScroll = async (e: any) => {
+    console.log('handle scroll', e)
+    // if handle is scrolling then hide video titel , des ,etc 
 
+  }
 
   useEffect(() => {
     getVideoDetails();
@@ -157,8 +145,8 @@ export default function Watchpage() {
   if (loading) {
     return (
       <View style={styles.loadingContainer}>
-        <ActivityIndicator 
-        size="small" color="#00ff00" />
+        <ActivityIndicator
+          size="small" color="#00ff00" />
       </View>
     );
   }
@@ -200,17 +188,17 @@ export default function Watchpage() {
             style={video?.isSubscribed ? styles.subscribeButton : styles.unsubscribeButton}
             onPress={() => toggleSubscribe(video?.owner?._id)}
           >
-            <Text style={video?.isSubscribed ? styles.subscribeText: styles.unsubscribeText}>
+            <Text style={video?.isSubscribed ? styles.subscribeText : styles.unsubscribeText}>
               {video?.isSubscribed ? 'Subscribed' : 'Subscribe'}
             </Text>
           </TouchableOpacity>
         </View>
         {/* fro like & comment btn  */}
         <View style={styles.buttonsContainer}>
-          <TouchableOpacity 
-          onPress={() => toggleLike()}
-           >
-          <Animated.View
+          <TouchableOpacity
+            onPress={() => toggleLike()}
+          >
+            <Animated.View
               style={[
                 styles.likeButton,
                 { transform: [{ scale: bounceAnim }] },
@@ -225,43 +213,44 @@ export default function Watchpage() {
             </Animated.View>
           </TouchableOpacity>
           <TouchableOpacity style={styles.shareButton} >
-          <AntDesign name="sharealt" size={17} color="white" />
+            <AntDesign name="sharealt" size={17} color="white" />
           </TouchableOpacity>
-          <TouchableOpacity 
-          onPress={() => setIsCommentOpened(!isCommentOpened)}
-          style={styles.commentButton} >
-            <EvilIcons 
-            name="comment" 
-            size={24} 
-            color={isCommentOpened ? '#6bd3ff':'white'}
+          <TouchableOpacity
+            onPress={() => setIsCommentOpened(!isCommentOpened)}
+            style={styles.commentButton} >
+            <EvilIcons
+              name="comment"
+              size={24}
+              color={isCommentOpened ? '#6bd3ff' : 'white'}
             />
           </TouchableOpacity>
         </View>
       </View>
       {/* for comments  */}
       <View>
-      {isCommentOpened && (
-        <CommentsPage/>
-      )}
+        {isCommentOpened && (
+          <CommentsPage />
+        )}
       </View>
       {/* for more videos / realted videos suggestion  */}
       <View style={{ flex: 1 }}>
-      <FlatList
-      style={styles.videocard}
-      data={suggestionVideos}
-      keyExtractor={(item:any, index) => item?._id ?? index.toString()}
-      renderItem={({ item }) => <VideoCard video={item} />}
-      showsVerticalScrollIndicator={false}
-        // onEndReached={handleEndReached}
-        onEndReachedThreshold={0.5}
-        ListFooterComponent={
-          suggestionVideoLoading ? (
-            <View style={styles.loadingContainer}>
-              <ActivityIndicator size="small" color="#00ff00" />
-            </View>
-          ) : null
-        }
-      />
+        <FlatList
+          style={styles.videocard}
+          data={suggestionVideos}
+          keyExtractor={(item: any, index) => item?._id ?? index.toString()}
+          renderItem={({ item }) => <VideoCard video={item} />}
+          showsVerticalScrollIndicator={false}
+          // onEndReached={handleEndReached}
+          onScroll={(e) => handleScroll(e)}
+          onEndReachedThreshold={0.5}
+          ListFooterComponent={
+            suggestionVideoLoading ? (
+              <View style={styles.loadingContainer}>
+                <ActivityIndicator size="small" color="#00ff00" />
+              </View>
+            ) : null
+          }
+        />
       </View>
     </View>
   );
@@ -287,11 +276,11 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     fontFamily: 'Arial',
   },
-  loadingContainer:{
-    flex:1,
-    justifyContent:"center",
-    alignItems:"center",
-    backgroundColor:"black"
+  loadingContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "black"
   },
   viewsAndTimeText: {
     color: '#bbb',
@@ -381,49 +370,49 @@ const styles = StyleSheet.create({
     marginHorizontal: 5,
     borderRadius: 80,
     backgroundColor: '#252422',
-    padding:15,
-    width:60,
-    height:35
+    padding: 15,
+    width: 60,
+    height: 35
   },
-  unlikeButton:{
+  unlikeButton: {
     flexDirection: 'row',
     paddingVertical: 10,
     marginHorizontal: 5,
     borderRadius: 80,
     backgroundColor: '#252422',
-    padding:10,
-    width:60,
-    height:35
+    padding: 10,
+    width: 60,
+    height: 35
   },
   likeText: {
     color: 'white',
     fontSize: 14,
     fontWeight: '400',
     textAlign: 'center',
-    marginLeft:7,
+    marginLeft: 7,
   },
   shareButton: {
     borderRadius: 30,
     backgroundColor: '#252422',
-    padding:12,
-    paddingLeft:20,
-    width:65,
-    height:38
+    padding: 12,
+    paddingLeft: 20,
+    width: 65,
+    height: 38
   },
   commentButton: {
     borderRadius: 80,
     backgroundColor: '#252422',
-    padding:8,
-    paddingLeft:20,
-    width:65,
-    height:38
+    padding: 8,
+    paddingLeft: 20,
+    width: 65,
+    height: 38
   },
   buttonText: {
     color: 'white',
     fontWeight: 'bold',
   },
-  videocard:{
-    marginTop:5
+  videocard: {
+    marginTop: 5
   }
-  
+
 });

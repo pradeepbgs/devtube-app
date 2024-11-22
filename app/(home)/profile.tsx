@@ -22,11 +22,12 @@ export default function Profile() {
     );
   }
 
+
   useEffect(() => {
     if (isLoggedIn && user?.user?._id) {
       router.push({
         pathname: '/(home)/profile',
-        params: { user: JSON.stringify(user?.user) },
+        params: { userDetails: JSON.stringify(user?.user) },
       });
     }
   }, [isLoggedIn,user?._id])

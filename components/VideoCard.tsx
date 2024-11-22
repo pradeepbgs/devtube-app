@@ -6,8 +6,6 @@ import { View, Text, Image, StyleSheet, TouchableOpacity, Dimensions } from 'rea
 const { width } = Dimensions.get('window');
 
 
-
-
 const VideoCard = ({ video, onPress }: any) => {
   const formattedDuration = formatDuration(video?.duration);
   const timeDifference = timeAgo(video.createdAt);
@@ -24,7 +22,7 @@ const VideoCard = ({ video, onPress }: any) => {
   const handleUserPress = (user:any) => {
     router.push({
       pathname: '/(profile)',
-      params: { user: JSON.stringify(user) },
+      params: { userDetails: JSON.stringify(user) },
     });
   };
 

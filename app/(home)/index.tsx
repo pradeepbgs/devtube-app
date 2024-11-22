@@ -1,9 +1,12 @@
-import React, { useState, useEffect } from "react";
-import { StyleSheet, View, FlatList, Text, TouchableOpacity, ScrollView , ActivityIndicator} from "react-native";
+import React, { useState, useEffect, useRef } from "react";
+import { StyleSheet, View, FlatList, Text, TouchableOpacity, ScrollView , ActivityIndicator, Animated} from "react-native";
 import VideoCard from "@/components/VideoCard";
 import axios from "axios";
 import { API_URI } from "@/utils/api";
+
 const suggestionArray = ["All","JavaScript","Programming","Algorithms","Gaming","Videos","Web Development","System Programming"]
+
+const AnimatedFlatList = Animated.createAnimatedComponent(FlatList)
 
 export default function Index() {
   const [videos, setVideos] = useState<string[]>([]);
@@ -11,6 +14,10 @@ export default function Index() {
   const [loading, setLoading] = useState<boolean>(true);
   const [nextVideoLoading, setNextVideoLoading] = useState<boolean>(false);
   const [selectedCategory, setSelectedCategory] = useState<string|null>(null);
+  const [isPageRefreshing,setIsPageRefreshing] = useState<boolean>(false)
+
+  const bounceAnim = useRef(new Animated.Value(1)).current;
+  
 
   const fetchHomeVideos = async () => {
     const isPagination = page > 1;
@@ -47,6 +54,17 @@ export default function Index() {
     }
   };
 
+  const handleScroll = Animated.event(
+    [{ nativeEvent: { contentOffset: { y: bounceAnim } } }],
+    { useNativeDriver: true }
+  );
+
+  const handleRefresh = async () => {
+    setIsPageRefreshing(true)
+    await fetchHomeVideos()
+    setIsPageRefreshing(false)
+  };
+
   useEffect(() => {
     fetchHomeVideos();
   }, [selectedCategory,page,]);
@@ -56,7 +74,6 @@ export default function Index() {
       <View style={styles.loadingContainer}>
         <ActivityIndicator 
         size="small" color="#00ff00" />
-        {/* <Text style={styles.text}>Loading videos...</Text> */}
       </View>
     );
   }
@@ -105,7 +122,7 @@ export default function Index() {
           }
           </ScrollView>
       </View>
-      <FlatList
+      <AnimatedFlatList
       style={styles.videocard}
         data={videos}
         keyExtractor={(item:any, index) => item?._id ?? index.toString()}
@@ -113,6 +130,9 @@ export default function Index() {
         showsVerticalScrollIndicator={false}
         onEndReached={handleEndReached}
         onEndReachedThreshold={0.5}
+        refreshing={isPageRefreshing}
+        onRefresh={handleRefresh}
+        onScroll={handleScroll}
         ListFooterComponent={
           nextVideoLoading ? (
             <View style={styles.loadingContainer}>

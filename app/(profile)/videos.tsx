@@ -1,10 +1,10 @@
 import { StyleSheet, Text, View } from 'react-native'
 import React from 'react'
 
-export default function _layout() {
+export default function videos() {
   return (
     <View>
-      <Text>_layout</Text>
+      <Text>videos</Text>
     </View>
   )
 }

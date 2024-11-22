@@ -1,10 +1,10 @@
 import { Stack } from "expo-router";
-import { StyleSheet, View, StatusBar } from "react-native";
+import { StyleSheet, View, StatusBar, Text } from "react-native";
 import { Provider, useDispatch } from "react-redux";
 import store from "@/redux/store";
 import * as SecureStore from 'expo-secure-store';
 import { login } from "@/redux/authSlice";
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { isTokenExpired } from "@/utils/jwt";
 import axios from "axios";
 import { API_URI } from "@/utils/api";
@@ -20,6 +20,7 @@ export default function RootLayout() {
 
 function AppInitializer() {
   const dispatch = useDispatch();
+  const [isloading,setisloading] = useState<boolean>(true)
 
   async function initializeUser() {
     const user = await SecureStore.getItemAsync("user");
@@ -42,13 +43,17 @@ function AppInitializer() {
     }
 
     if (user) {
-      // dispatch(login({ isLoggedIn: true, user: JSON.parse(user) }));
+      dispatch(login({ isLoggedIn: true, user: JSON.parse(user) }));
     }
+    setisloading(false)
   }
   
   useEffect(() => {
     initializeUser();
-  }, [dispatch]);
+  }, [dispatch,isloading]);
+  
+
+
 
   return (
     <View style={styles.container}>

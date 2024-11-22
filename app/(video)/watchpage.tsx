@@ -12,6 +12,7 @@ import EvilIcons from '@expo/vector-icons/EvilIcons';
 import CommentsPage from '../(comments)/comments';
 import VideoCard from '@/components/VideoCard';
 import { handleBounce } from '@/utils/bounce';
+import { LoadingSpinner } from '@/components/loadSpinner';
 
 
 const { width } = Dimensions.get('window');
@@ -132,25 +133,16 @@ export default function Watchpage() {
     });
   };
 
-  const handleScroll = async (e: any) => {
-    console.log('handle scroll', e)
-    // if handle is scrolling then hide video titel , des ,etc 
-
-  }
+  
 
   useEffect(() => {
     getVideoDetails();
   }, [videoData?._id]);
 
   if (loading) {
-    return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator
-          size="small" color="#00ff00" />
-      </View>
-    );
+    return LoadingSpinner()
   }
-
+  
   return (
     <View style={styles.container}>
       <VideoScreen url={video?.videoFile} />
@@ -241,7 +233,6 @@ export default function Watchpage() {
           renderItem={({ item }) => <VideoCard video={item} />}
           showsVerticalScrollIndicator={false}
           // onEndReached={handleEndReached}
-          onScroll={(e) => handleScroll(e)}
           onEndReachedThreshold={0.5}
           ListFooterComponent={
             suggestionVideoLoading ? (

@@ -46,6 +46,13 @@ export const fetchUserVideosData = async (userId: string) => {
 export const getUserPlayLists = async (userId: string) => {
   const accessToken = await SecureStore.getItemAsync("accessToken");
   const response = await axios.get(`${API_URI}/api/v1/playlists/user/${userId}`,
-    { headers: { Authorization: `Bearer ${accessToken}`, }, withCredentials: true, });
+    {withCredentials: true});
   return response?.data?.data || [];
+}
+
+export const getPlayListVideos = async (playListId: string) => {
+
+  const response = await axios.get(`${API_URI}/api/v1/playlists/${playListId}`,
+    {withCredentials: true, });
+    return response?.data?.data ?? []
 }

@@ -51,8 +51,8 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
   },
   thumbnail: {
-    width: 145,
-    height: 85,
+    width: 170,
+    height: 100,
     borderRadius: 6,
     resizeMode: 'cover',
   },
@@ -70,7 +70,7 @@ const styles = StyleSheet.create({
   details: {
     flex: 1,
     marginLeft: 10,
-    justifyContent: 'center',
+    // justifyContent: 'center',
   },
   title: {
     fontSize: 15,

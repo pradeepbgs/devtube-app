@@ -6,7 +6,7 @@ export async function isTokenExpired(token:string) {
     const currentTime = Math.floor(Date.now() / 1000); 
     return decoded?.exp < currentTime; 
     } catch (error:any) {
-        console.error("Error decoding token:", error);
+        // console.error("Error decoding token:", error);
     return true;
     }
 }

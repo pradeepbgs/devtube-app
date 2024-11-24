@@ -6,10 +6,11 @@ import { getUserPlayLists } from '@/service/apiService';
 import PlayListCard from '@/components/PlayListCard';
 import { LoadingSpinner } from '@/components/loadSpinner';
 import { setPlayLists } from '@/redux/userProfileSlice';
+import AntDesign from '@expo/vector-icons/AntDesign';
 
 const AnimatedFlatList = Animated.createAnimatedComponent(FlatList)
 
-export default function ListOfPlayList() {
+export default function ListOfPlayList({header,fectUserDetails}:any) {
   const [loading, setLoading] = useState<boolean>(false);
   // const [playList,setPlayList]= useState<string[]>([])
   const [nextPlayListLoding, setnextPlayListLoding] = useState<boolean>(false)
@@ -24,11 +25,10 @@ export default function ListOfPlayList() {
 
 
   const getUserPlaylist = async () => {
-    if (playList.length > 0) {
-      return;
-    }
+    // if (playList.length > 0) {
+    //   return;
+    // }
     setLoading(true);
-    console.log('working or not')
     try {
       const data = await getUserPlayLists(parsedUser?._id);
       dispatch(setPlayLists(data))
@@ -43,6 +43,7 @@ export default function ListOfPlayList() {
   const handleRefresh = async () => {
     setIsPageRefreshing(true)
     await getUserPlaylist()
+    await fectUserDetails()
     setIsPageRefreshing(false)
   };
 
@@ -51,27 +52,43 @@ export default function ListOfPlayList() {
       if (parsedUser) await getUserPlaylist();
     };
     fetchData()
-  }, [parsedUser]);
+  }, []);
 
+
+  if(playList.length === 0){
+    return (
+      <>
+      {header()}
+      <View style={{flex:1,justifyContent:"center",alignItems:"center"}}>
+      <AntDesign name="frowno" size={30} color="white" />
+        <Text style={{color:"#fff",fontSize:16}}>No PlayList Found</Text>
+      </View>
+      </>
+    )
+  }
 
   return (
-    loading 
-    ? LoadingSpinner("small", "#fff") 
-    : <AnimatedFlatList
-    style={styles.container}
-    data={playList}
-    keyExtractor={(item: any, index) => item?._id ?? index.toString()} 
-    renderItem={renderPlayListCard}
-    refreshing={isPageRefreshing}
-    onRefresh={handleRefresh}
-    ListFooterComponent={
-      nextPlayListLoding ? (
-        LoadingSpinner()
-      ) : null
-    }
-    />
-  )
+    <View>
+      {
+       loading ? LoadingSpinner()
+       :  <AnimatedFlatList
+       style={styles.container}
+       data={playList}
+       keyExtractor={(item: any, index) => item?._id ?? index.toString()} 
+       renderItem={renderPlayListCard}
+       refreshing={isPageRefreshing}
+       onRefresh={handleRefresh}
+       ListHeaderComponent={header}
+       ListFooterComponent={
+         nextPlayListLoding ? (
+           LoadingSpinner()
+         ) : null
+       }
+       />
+      }      
+    </View>
 
+  )
 }
 
 const styles = StyleSheet.create({

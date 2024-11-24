@@ -10,9 +10,10 @@ import * as SecureStore from 'expo-secure-store';
 import AntDesign from '@expo/vector-icons/AntDesign';
 import EvilIcons from '@expo/vector-icons/EvilIcons';
 import CommentsPage from '../(comments)/comments';
-import VideoCard from '@/components/VideoCard';
 import { handleBounce } from '@/utils/bounce';
 import { LoadingSpinner } from '@/components/loadSpinner';
+import VideoListingCard from '@/components/VideoListingCard';
+import { PopUp } from '@/components/LogoutPopup';
 
 
 const { width } = Dimensions.get('window');
@@ -24,6 +25,7 @@ export default function Watchpage() {
   const [page, setPage] = useState<number>(1)
   const [suggestionVideoLoading, setsuggestionVideoLoading] = useState<boolean>(false)
   const [isExpanded, setIsExpanded] = useState<boolean>(false);
+  const [logoutPopupVisible, setLogoutPopupVisible] = useState<boolean>(false);
   const { videoDeatails }: any = useLocalSearchParams();
   const { isLoggedIn } = useSelector((state: any) => state.auth);
   const [isCommentOpened, setIsCommentOpened] = useState<boolean>(false)
@@ -32,10 +34,11 @@ export default function Watchpage() {
 
   const router = useRouter();
   const bounceAnim = useRef(new Animated.Value(1)).current;
-
+  const slideAnim = useRef(new Animated.Value(0)).current;
 
   // Fetch video details from API
   const getVideoDetails = async () => {
+    setLoading(true)
     if (!videoData?._id) return;
 
     const accessToken = await SecureStore.getItemAsync("accessToken");
@@ -60,8 +63,8 @@ export default function Watchpage() {
   // Toggle subscribe/unsubscribe functionality
   const toggleSubscribe = async (channelId: any) => {
     if (!isLoggedIn) {
-      router.push('/(auth)/login')
-      return;
+      setLogoutPopupVisible(true);
+      return 
     }
     if (!channelId) return;
     const accessToken = await SecureStore.getItemAsync("accessToken");
@@ -96,7 +99,7 @@ export default function Watchpage() {
 
   const toggleLike = async () => {
     if (!isLoggedIn) {
-      router.push('/(auth)/login')
+      setLogoutPopupVisible(true);
       return;
     }
     if (!video?._id) return;
@@ -107,7 +110,6 @@ export default function Watchpage() {
         headers: { Authorization: `Bearer ${accessToken}` },
         withCredentials: true,
       })
-      console.log(res.data.message);
       if (res.data.message === "liked video") {
         setVideo((prevVideo: any) => ({
           ...prevVideo,
@@ -126,6 +128,26 @@ export default function Watchpage() {
     }
   }
 
+  const getSuggestionVideo = async () => {
+    setsuggestionVideoLoading(true)
+    try {
+      const response = await axios.get(`${API_URI}/api/v1/videos?page=${page}`, {
+        withCredentials: true,
+      });
+      const newVideos = response?.data?.data || [];
+      if (page === 1) {
+        setsuggestionVideos(newVideos);
+      } else {
+        setsuggestionVideos((prevVideos): any => [...prevVideos, ...newVideos]);
+      }
+    } catch (error) {
+      console.log("Error fetching videos:", error);
+    } finally {
+      setLoading(false);
+      setsuggestionVideoLoading(false);
+    }
+  }
+
   const handlePress = (user: any) => {
     router.push({
       pathname: '/(profile)',
@@ -133,32 +155,38 @@ export default function Watchpage() {
     });
   };
 
-  
+
 
   useEffect(() => {
     getVideoDetails();
+    getSuggestionVideo()
   }, [videoData?._id]);
 
-  if (loading) {
-    return LoadingSpinner()
-  }
-  
-  return (
-    <View style={styles.container}>
-      <VideoScreen url={video?.videoFile} />
-      <View style={styles.textContainer}>
-        <Text style={styles.text}>{video?.title || 'No Title'}</Text>
-        <Text style={styles.viewsAndTimeText}>
-          {video?.views || 0} views · {createdAgo}
+
+  const renderHeader = () => (
+      <View style={styles.textContainer} >
+        <Text onPress={() => setIsExpanded(!isExpanded)} style={styles.text}>{video?.title || 'No Title'}</Text>
+        <Text onPress={() => setIsExpanded(!isExpanded)} style={styles.viewsAndTimeText}>
+          {video?.views || 0} views · {createdAgo} 
+          <Text 
+          onPress={() => setIsExpanded(!isExpanded)}
+          style={styles.viewMore} >
+             {isExpanded ? '...Read Less' : '...Read More'}
+            </Text>
         </Text>
-        <TouchableOpacity onPress={() => setIsExpanded(!isExpanded)} activeOpacity={0.9}>
+        {/* description  */}
+        <TouchableOpacity style={styles.descriptionConatiner} onPress={() => setIsExpanded(!isExpanded)} activeOpacity={0.9}>
           <Text
-            style={styles.descriptionText}
+            style={[
+              styles.descriptionText,
+              { display: isExpanded ? 'flex' : 'none' },
+            ]}
             numberOfLines={isExpanded ? undefined : 1}
           >
             {video?.description || 'No Description'}
           </Text>
         </TouchableOpacity>
+        {/*  */}
         <View style={styles.owner}>
           <View style={styles.ownerContainer}>
             <TouchableOpacity
@@ -169,12 +197,12 @@ export default function Watchpage() {
                 style={styles.avatar}
               />
             </TouchableOpacity>
-            <View>
+            {/* <View> */}
               <Text style={styles.ownerText}>{video?.owner?.fullname || 'Unknown User'}</Text>
               <Text style={styles.subscribersText}>
-                {video?.subscribersCount || 0} subscribers
+                {video?.subscribersCount || 0} 
               </Text>
-            </View>
+            {/* </View> */}
           </View>
           <TouchableOpacity
             style={video?.isSubscribed ? styles.subscribeButton : styles.unsubscribeButton}
@@ -198,14 +226,14 @@ export default function Watchpage() {
             >
               <AntDesign
                 name={video?.isLiked ? "like1" : "like2"}
-                size={17}
+                size={14}
                 color={video?.isLiked ? "green" : "white"}
               />
               <Text style={styles.likeText}>{video?.likesCount}</Text>
             </Animated.View>
           </TouchableOpacity>
           <TouchableOpacity style={styles.shareButton} >
-            <AntDesign name="sharealt" size={17} color="white" />
+            <AntDesign name="sharealt" size={13} color="white" />
           </TouchableOpacity>
           <TouchableOpacity
             onPress={() => setIsCommentOpened(!isCommentOpened)}
@@ -217,34 +245,51 @@ export default function Watchpage() {
             />
           </TouchableOpacity>
         </View>
+        <PopUp 
+        visible={logoutPopupVisible}
+        onClose={() => setLogoutPopupVisible(false)}
+        onHandler={() => {
+          setLogoutPopupVisible(false);
+          router.push('/(auth)/login')
+        }}
+        title='You need to login to subscribe to this channel'
+        nextBtn='Login'
+      />
       </View>
-      {/* for comments  */}
-      <View>
-        {isCommentOpened && (
-          <CommentsPage />
-        )}
+  )
+
+  return (
+    <>
+      <View style={styles.container}>
+       <VideoScreen url={video?.videoFile} />
+      
+      <View style={styles.commentContainer}>
+        {
+          isCommentOpened && <CommentsPage onClose={() => setIsCommentOpened(false)} />
+        }
       </View>
-      {/* for more videos / realted videos suggestion  */}
-      <View style={{ flex: 1 }}>
-        <FlatList
-          style={styles.videocard}
-          data={suggestionVideos}
-          keyExtractor={(item: any, index) => item?._id ?? index.toString()}
-          renderItem={({ item }) => <VideoCard video={item} />}
-          showsVerticalScrollIndicator={false}
-          // onEndReached={handleEndReached}
-          onEndReachedThreshold={0.5}
-          ListFooterComponent={
-            suggestionVideoLoading ? (
-              <View style={styles.loadingContainer}>
-                <ActivityIndicator size="small" color="#00ff00" />
-              </View>
-            ) : null
-          }
-        />
+      
+         <FlatList
+        style={styles.videocard}
+        data={suggestionVideos}
+        keyExtractor={(item: any, index) => item?._id ?? index.toString()}
+        renderItem={({ item }) => <VideoListingCard video={item} />}
+        showsVerticalScrollIndicator={false}
+        // onEndReached={handleEndReached}
+        ListHeaderComponent={renderHeader}
+        onEndReachedThreshold={0.5}
+        ListFooterComponent={
+          suggestionVideoLoading ? (
+            <View style={styles.loadingContainer}>
+              <ActivityIndicator size="small" color="#00ff00" />
+            </View>
+          ) : null
+        }
+      />
+      
       </View>
-    </View>
-  );
+    </>
+  )
 }
 
 const styles = StyleSheet.create({
@@ -258,12 +303,15 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0, 0, 0, 0.85)',
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
-    // marginTop: -10,
+    marginTop: -10,
+    borderBottomWidth:2,
+    borderBottomColor:'rgba(255, 255, 255, 0.2)',
+    marginBottom:6
   },
   text: {
     color: 'white',
     fontSize: 18,
-    marginBottom: 5,
+    // marginBottom: 5,
     fontWeight: 'bold',
     fontFamily: 'Arial',
   },
@@ -279,16 +327,17 @@ const styles = StyleSheet.create({
     fontWeight: '400',
     fontFamily: 'Arial',
   },
+
   avatar: {
-    width: 45,
-    height: 45,
+    width: 35,
+    height: 35,
     borderRadius: 25,
-    marginRight: 15,
+    marginRight: 12,
   },
   ownerText: {
     color: 'white',
-    fontSize: 16,
-    fontWeight: '600',
+    fontSize: 13,
+    fontWeight: '800',
     fontFamily: 'Roboto',
   },
   owner: {
@@ -300,45 +349,55 @@ const styles = StyleSheet.create({
   ownerContainer: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'space-between',
   },
   subscribersText: {
     color: '#bbb',
-    fontSize: 14,
+    fontSize: 12,
     marginTop: 2,
+    marginLeft:10,
     fontFamily: 'Arial',
+    fontWeight: '700',
+    textAlign:'center'
+  },
+  descriptionConatiner:{
+    backgroundColor: 'rgba(50, 50, 50, 0.6)',
+    borderRadius: 10,
+    marginTop: 5,
+    paddingHorizontal:10
   },
   descriptionText: {
     color: 'white',
     fontSize: 14,
+    fontWeight: '700',
     lineHeight: 22,
     fontFamily: 'Arial',
     marginTop: 5,
-    backgroundColor: 'rgba(50, 50, 50, 0.6)',
     borderRadius: 10,
     padding: 5,
   },
   subscribeButton: {
     backgroundColor: '#FF0000',
     paddingVertical: 8,
-    paddingHorizontal: 16,
+    paddingHorizontal: 6,
     borderRadius: 20,
   },
   unsubscribeButton: {
     backgroundColor: '#ccc',
     paddingVertical: 8,
-    paddingHorizontal: 16,
+    paddingHorizontal: 6,
     borderRadius: 20,
   },
   subscribeText: {
     color: 'white',
-    fontSize: 16,
-    fontWeight: '400',
+    fontSize: 13,
+    fontWeight: '600',
     textAlign: 'center',
   },
   unsubscribeText: {
     backgroundColor: '#ccc',
-    fontSize: 16,
-    fontWeight: '400',
+    fontSize: 13,
+    fontWeight: '600',
     textAlign: 'center',
   },
   showMoreText: {
@@ -353,17 +412,17 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     marginTop: 15,
     alignItems: 'center',
+    textAlign:'center'
   },
   likeButton: {
     // flex:1,
     flexDirection: 'row',
-    paddingVertical: 10,
-    marginHorizontal: 5,
     borderRadius: 80,
+    alignItems:'center',
     backgroundColor: '#252422',
-    padding: 15,
-    width: 60,
-    height: 35
+    width: 55,
+    height: 28,
+    paddingLeft:10
   },
   unlikeButton: {
     flexDirection: 'row',
@@ -371,13 +430,13 @@ const styles = StyleSheet.create({
     marginHorizontal: 5,
     borderRadius: 80,
     backgroundColor: '#252422',
-    padding: 10,
-    width: 60,
-    height: 35
+    width: 55,
+    height: 28,
+    paddingLeft:10
   },
   likeText: {
     color: 'white',
-    fontSize: 14,
+    fontSize: 10,
     fontWeight: '400',
     textAlign: 'center',
     marginLeft: 7,
@@ -387,16 +446,16 @@ const styles = StyleSheet.create({
     backgroundColor: '#252422',
     padding: 12,
     paddingLeft: 20,
-    width: 65,
-    height: 38
+    width: 55,
+    height: 35
   },
   commentButton: {
     borderRadius: 80,
     backgroundColor: '#252422',
-    padding: 8,
-    paddingLeft: 20,
-    width: 65,
-    height: 38
+    padding: 6,
+    paddingLeft: 15,
+    width: 55,
+    height: 35
   },
   buttonText: {
     color: 'white',
@@ -404,6 +463,14 @@ const styles = StyleSheet.create({
   },
   videocard: {
     marginTop: 5
+  },
+  commentContainer: {
+    // flex:1,
+  },
+  viewMore: {
+    color: '#6bd3ff',
+    fontSize: 12,
+    fontWeight: 'bold',
   }
 
 });

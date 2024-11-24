@@ -5,33 +5,44 @@ import {
   Text,
   View,
   TouchableOpacity,
+  FlatList,
+  ScrollView,
 } from "react-native";
-import React, { useEffect, useRef, useState } from "react";
-import { useLocalSearchParams, useRouter } from "expo-router";
+import React, { useCallback, useEffect, useRef, useState } from "react";
+import { router, useLocalSearchParams, useRouter } from "expo-router";
 import { useDispatch, useSelector } from "react-redux";
-import { setUser } from "@/redux/userProfileSlice";
+import { setUser, setUserVideos } from "@/redux/userProfileSlice";
 import { LoadingSpinner } from "@/components/loadSpinner";
-import { getUserProfileData } from "@/service/apiService";
-import HomeVieos from './home'
+import { fetchUserVideosData, getUserProfileData, logoutUser, subscribe } from "@/service/apiService";
 import { Animated } from "react-native";
 import ListOfPlayList from "./(playlist)/ListOfPlayList";
-
+import AboutPage from "./about";
+import AntDesign from "@expo/vector-icons/AntDesign";
+import VideoListingCard from "@/components/VideoListingCard";
+import * as SecureStore from 'expo-secure-store'
+import { logout } from "@/redux/authSlice";
+import { PopUp } from "@/components/LogoutPopup";
 
 const { width } = Dimensions.get("window");
+const AnimatedFlatList = Animated.createAnimatedComponent(FlatList);
 
 export default function Index() {
-  const [loading, setLoading] = useState<boolean>(true);
+  const [loading, setLoading] = useState<boolean>(false);
+  const [isPageRefreshing, setIsPageRefreshing] = useState<boolean>(false)
+  const [nextUserVideoLoading, setNextUserVideoLoading] = useState<boolean>(false);
+  const [logoutPopupVisible, setLogoutPopupVisible] = useState<boolean>(false);
   const [activeTab, setActiveTab] = useState<string>("Home");
   const { userDetails }: any = useLocalSearchParams();
-  const localUser = useSelector((state: any) => state.auth.user);
-  const parsedUser = userDetails ? JSON.parse(userDetails) : null;
+  const localUser = useSelector((state: any) => state.auth?.user?.user);
+  const parsedUser = userDetails ? JSON.parse(userDetails) : {};
   const { user } = useSelector((state: any) => state.userProfile)
-  const { scrollY } = useSelector((state: any) => state.scroll);
+  const { userVideos } = useSelector((state: any) => state.userProfile)
+  
   const dispatch = useDispatch()
-  const userDetailsOpacity = useRef(new Animated.Value(1)).current;
-  const router = useRouter()
+  const renderVideoCard = useCallback(({ item }: any) => <VideoListingCard video={item} />, []);
 
   const getUserProfile = async () => {
+    if (!parsedUser || !parsedUser._id) return;
     try {
       const userData = await getUserProfileData(parsedUser?.username)
       if (userData) {
@@ -45,118 +56,243 @@ export default function Index() {
     }
   };
 
+  const fetchUserVideos = async (userId: string) => {
+    // if(userVideos.length > 0) return
+    if (!parsedUser || !parsedUser._id) return;
+    setNextUserVideoLoading(true);
+    try {
+      const newVideos = await fetchUserVideosData(userId)
+      dispatch(setUserVideos(newVideos))
+    } catch (error) {
+      alert("Something went wrong while fetching user videos")
+      console.log("Something went wrong while fetching user videos", error)
+    } finally {
+      setNextUserVideoLoading(false);
+      setLoading(false);
+    }
+  };
+
+  const handleLogout = async () => {
+    const accessToken = await SecureStore.getItemAsync("accessToken");
+
+    try {
+      await logoutUser(accessToken as string)
+      dispatch(logout())
+      await SecureStore.deleteItemAsync("accessToken");
+      await SecureStore.deleteItemAsync("refreshToken");
+      router.push('/')
+    } catch (error) {
+      alert(`something went wrong while logging out user: ${error}`)
+    } finally{
+      setLogoutPopupVisible(false)
+    }
+  };
+
+  const toggleSubscribe = async () => {
+    if (!parsedUser?._id) return;
+    const accessToken = await SecureStore.getItemAsync("accessToken");
+    try {
+      const response :any = await subscribe(parsedUser?._id, accessToken as string)
+      if (response?.data?.message === "subscribed successfully") {
+        dispatch(setUser({
+          ...user,
+          isSubscribed: true,
+          subscribersCount: user?.subscribersCount + 1
+        }))
+      } 
+      else if (response?.data?.message === "unsubscribed successfully") {
+        dispatch(setUser({
+          ...user,
+          isSubscribed: false,
+          subscribersCount: user?.subscribersCount - 1
+        }))
+      }
+    } catch (error) {
+      alert(`something went wrong while subscribing: ${error}`)
+    }
+  }
+
   useEffect(() => {
     const fetchData = async () => {
-      if (parsedUser) await getUserProfile()
+      await getUserProfile();
+      await fetchUserVideos(parsedUser?._id);
     };
-    fetchData();
-  }, [userDetails]);
+    setLoading(true);
+    fetchData().finally(() => setLoading(false));
+  }, []);
 
   if (loading) {
     return LoadingSpinner("small", "#fff")
   }
 
+  console.log(user?.isSubscribed)
 
-  return (
-    <>
-      <Animated.ScrollView
-        style={[styles.container]}>
-        {/* Cover Image */}
+  if (!userDetails) {
+    return (
+      <View style={styles.container}>
+        <Text style={styles.message}>You're not signed in.</Text>
+        <Text style={styles.subMessage}>Please sign in to view your profile.</Text>
+        <TouchableOpacity style={styles.button} onPress={() => router.push('/login')}>
+          <Text 
+          onPress={() => router.push('/(auth)/login')}
+          style={styles.buttonText}>Sign In</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
+
+  const renderProfileHeader = () => (
+    <Animated.ScrollView
+      style={[styles.container]}>
+      {/* Cover Image */}
+      <View>
+        <Image
+          source={{
+            uri: user?.coverImage || "https://via.placeholder.com/800x200",
+          }}
+          style={styles.coverImage}
+        />
+      </View>
+
+      {/* Profile Section */}
+      <View style={styles.profileContainer}>
         <View>
           <Image
-            source={{
-              uri: user?.coverImage || "https://via.placeholder.com/800x200",
-            }}
-            style={styles.coverImage}
+            source={{ uri: user?.avatar || "https://via.placeholder.com/100" }}
+            style={styles.profileImage}
           />
         </View>
-
-        {/* Profile Section */}
-        <View style={styles.profileContainer}>
-          <View>
-            <Image
-              source={{ uri: user?.avatar || "https://via.placeholder.com/100" }}
-              style={styles.profileImage}
-            />
-          </View>
-          <View style={styles.statsMainConatainer}>
-            <View style={styles.statsContainer}>
-              <View style={styles.stat}>
-                <View>
-                  <Text style={styles.fullname}>
-                    {user?.fullname || "Anonymous User"}
-                  </Text>
-                  <Text style={styles.userName}>
-                    @{user?.username || "No username"}
-                  </Text>
-                </View>
-                <Text style={styles.statCount}>{user?.subscribersCount || "0"}</Text>
-                <Text style={styles.statLabel}>Followers</Text>
+        <View style={styles.statsMainConatainer}>
+          <View style={styles.statsContainer}>
+            <View style={styles.stat}>
+              <View>
+                <Text style={styles.fullname}>
+                  {user?.fullname || "Anonymous User"}
+                </Text>
+                <Text style={styles.userName}>
+                  @{user?.username || "No username"}
+                </Text>
               </View>
-              {/* <View style={styles.stat}>
+              <Text style={styles.statCount}>{user?.subscribersCount || "0"}</Text>
+              <Text style={styles.statLabel}>Followers</Text>
+            </View>
+            {/* <View style={styles.stat}>
               <Text style={styles.statCount}>{user?.posts || "0"}</Text>
               <Text style={styles.statLabel}>Posts</Text>
             </View> */}
-              <View style={styles.actionsContainer}>
-                {localUser?.id !== user?.id ? (
-                  <TouchableOpacity style={styles.actionButton}>
-                    <Text style={styles.actionButtonText}>Subscribe</Text>
-                  </TouchableOpacity>
-                ) : null}
-              </View>
+            <View style={styles.actionsContainer}>
+              {localUser?._id === user?._id ? (
+                <TouchableOpacity
+                  onPress={() => setLogoutPopupVisible(true)}
+                  style={styles.actionButton}>
+                  <Text style={styles.actionButtonText}>Logout</Text>
+                </TouchableOpacity>
+              ) : (
+                <TouchableOpacity
+                  onPress={() =>{
+                    toggleSubscribe()
+                  }
+                  }
+                  style={styles.actionButton}>
+                  <Text style={styles.actionButtonText}>{user?.isSubscribed ? 'Subscribed':'Subscribe'}</Text>
+                </TouchableOpacity>
+              )}
             </View>
           </View>
         </View>
-
-        {/* Users videos , playlist */}
-        <View style={styles.MainProfileContainer}>
-          {/* will make a list like home , videos, playlist , about and do flexDirection row */}
-          <View style={styles.tabContent}>
-            <Text
-              onPress={() => setActiveTab("Home")}
-              style={activeTab === "Home" ? styles.activeTabText : styles.tabText}
-            >
-              Home
-            </Text>
-
-            <Text
-              onPress={() => setActiveTab("Playlist")}
-              style={
-                activeTab === "Playlist" ? styles.activeTabText : styles.tabText
-              }
-            >
-              Playlist
-            </Text>
-
-            <Text
-              onPress={() => setActiveTab("About")}
-              style={
-                activeTab === "About" ? styles.activeTabText : styles.tabText
-              }
-            >
-              About
-            </Text>
-          </View>
-        </View>
-        {/* Video Listing Page  */}
-      </Animated.ScrollView>
-      <View
-        style={styles.homeVideos}>
-        {
-          activeTab === 'Home' && <HomeVieos />
-        }
-        {
-          activeTab === 'Playlist' && <ListOfPlayList />
-        }
       </View>
-      {/* {
-        activeTab === 'Playlist' && (
-          <View style={styles.playlist}>
-            <ListOfPlayList />
-          </View>
+
+      {/* Users videos , playlist */}
+      <View style={styles.MainProfileContainer}>
+        {/* will make a list like home , videos, playlist , about and do flexDirection row */}
+        <View style={styles.tabContent}>
+          <Text
+            onPress={() => setActiveTab("Home")}
+            style={activeTab === "Home" ? styles.activeTabText : styles.tabText}
+          >
+            Home
+          </Text>
+
+          <Text
+            onPress={() => setActiveTab("Playlist")}
+            style={
+              activeTab === "Playlist" ? styles.activeTabText : styles.tabText
+            }
+          >
+            Playlist
+          </Text>
+
+          <Text
+            onPress={() => setActiveTab("About")}
+            style={
+              activeTab === "About" ? styles.activeTabText : styles.tabText
+            }
+          >
+            About
+          </Text>
+        </View>
+      </View>
+      {/* Video Listing Page  */}
+      <PopUp
+        visible={logoutPopupVisible}
+        onClose={() => setLogoutPopupVisible(false)}
+        onHandler={handleLogout}
+        title='Are you sure you want to logout?'
+        nextBtn='Logout'
+      />
+    </Animated.ScrollView>
+  )
+
+  const handleRefresh = async () => {
+    setIsPageRefreshing(true)
+    await fetchUserVideos(parsedUser?._id)
+    await getUserProfile()
+    setIsPageRefreshing(false)
+  };
+
+
+  if (activeTab === 'Home' && userVideos?.length === 0) {
+    return (
+      <>
+        {renderProfileHeader()}
+        <View style={{ flex: 1, justifyContent: "center", alignItems: "center", backgroundColor: 'black' }}>
+          <AntDesign name="frowno" size={30} color="white" />
+          <Text style={{ color: "#fff", fontSize: 16 }}>No Videos Found</Text>
+        </View>
+      </>
+    )
+  }
+
+  return (
+    <View
+      style={styles.homeVideos}>
+
+      {
+        activeTab === 'Home' && (
+          <AnimatedFlatList
+            style={styles.container}
+            data={userVideos}
+            keyExtractor={(item: any, index) => item?._id ?? index.toString()}
+            renderItem={renderVideoCard}
+            showsVerticalScrollIndicator={false}
+            onRefresh={handleRefresh}
+            refreshing={isPageRefreshing}
+            ListHeaderComponent={renderProfileHeader}
+            ListFooterComponent={
+              nextUserVideoLoading ? (
+                LoadingSpinner()
+              ) : null
+            }
+          />
         )
-      } */}
-    </>
+      }
+      {
+        activeTab === 'Playlist' && (<ListOfPlayList header={renderProfileHeader} fectUserDetails={getUserProfile} />)
+      }
+      {
+        activeTab === 'About' && (<AboutPage header={renderProfileHeader} fectUserDetails={getUserProfile} />)
+      }
+    </View>
   );
 }
 
@@ -164,7 +300,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "black",
-    marginBottom: -150,
   },
   coverImage: {
     width: width,
@@ -175,7 +310,6 @@ const styles = StyleSheet.create({
     flex: 1,
     flexDirection: "row",
     marginTop: -25,
-    // marginLeft:10
   },
   profileImage: {
     width: 90,
@@ -187,16 +321,11 @@ const styles = StyleSheet.create({
   userName: {
     color: "#EEEEEE",
     fontSize: 14,
-    // fontWeight: 'bold',
-    // marginBottom: 1,
-    // marginLeft:25,
   },
   fullname: {
     color: "white",
     fontSize: 17,
     fontWeight: "bold",
-    // marginTop: 5,
-    // marginLeft:25,
   },
   userBio: {
     color: "gray",
@@ -208,7 +337,6 @@ const styles = StyleSheet.create({
   statsContainer: {
     flexDirection: "row",
     justifyContent: "space-between",
-    // paddingVertical: 20,
     borderTopWidth: 1,
     borderTopColor: "#333",
     borderBottomColor: "#333",
@@ -236,9 +364,9 @@ const styles = StyleSheet.create({
   },
   actionButton: {
     backgroundColor: "#1E90FF",
-    paddingVertical: 10,
+    paddingVertical: 6,
     paddingHorizontal: 10,
-    borderRadius: 8,
+    borderRadius: 50,
   },
   messageButton: {
     backgroundColor: "gray",
@@ -255,17 +383,15 @@ const styles = StyleSheet.create({
     paddingLeft: 7,
   },
   MainProfileContainer: {
-    // width:'100%',
-    // paddingTop:10,
-    // paddingLeft:7,
+
   },
   tabContent: {
     flex: 1,
     flexDirection: "row",
-    // justifyContent:'space-between',
     marginTop: 20,
     borderBottomWidth: 1,
     borderBottomColor: "#333",
+    marginBottom: 5
   },
   tabText: {
     color: "#686D76",
@@ -287,14 +413,35 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     paddingHorizontal: 20,
     borderBottomWidth: 1,
-    borderBottomColor: "#333",
+    borderBottomColor: "white",
   },
   homeVideos: {
     flex: 1,
     backgroundColor: "black",
+    padding: 5
   },
   playlist: {
-    // flex: 1,
     backgroundColor: "black",
+  },
+  subMessage: {
+    fontSize: 14,
+    color: 'gray',
+    marginBottom: 16,
+  },
+  button: {
+    backgroundColor: '#1E90FF',
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 8,
+  },
+  message: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: 'white',
+    marginBottom: 8,
+  },
+  buttonText: {
+    color: 'white',
+    fontWeight: 'bold',
   },
 });

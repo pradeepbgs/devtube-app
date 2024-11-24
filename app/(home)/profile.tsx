@@ -2,15 +2,18 @@ import React, { useEffect } from 'react';
 import { StyleSheet, Text, View, TouchableOpacity } from 'react-native';
 import UserProfileLayout from '@/app/(profile)';
 import { useSelector } from 'react-redux';
-import { useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 
 export default function Profile() {
   const { isLoggedIn , user} = useSelector((state: any) => state.auth);
+  const { userDetails }: any = useLocalSearchParams();
   const router = useRouter();
-
+ 
   if (!isLoggedIn) {
     return (
       <View style={styles.container}>
+        <View>
+
         <Text style={styles.message}>You're not signed in.</Text>
         <Text style={styles.subMessage}>Please sign in to view your profile.</Text>
         <TouchableOpacity style={styles.button} onPress={() => router.push('/login')}>
@@ -18,6 +21,7 @@ export default function Profile() {
           onPress={() => router.push('/(auth)/login')}
           style={styles.buttonText}>Sign In</Text>
         </TouchableOpacity>
+          </View>
       </View>
     );
   }
@@ -30,7 +34,7 @@ export default function Profile() {
         params: { userDetails: JSON.stringify(user?.user) },
       });
     }
-  }, [isLoggedIn,user?._id])
+  }, [isLoggedIn,user?._id,userDetails])
 
   return (
     <View style={styles.container}>
@@ -43,6 +47,8 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: 'black',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   text: {
     color: 'white',

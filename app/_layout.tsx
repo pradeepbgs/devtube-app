@@ -34,7 +34,7 @@ function AppInitializer() {
         withCredentials: true,
       });
       
-      if (res.data.data) {
+      if (res.data?.data) {
         const { accessToken: newAccessToken, refreshToken: newRefreshToken } = res.data.data;
       
         await SecureStore.setItemAsync("accessToken", newAccessToken);

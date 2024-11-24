@@ -15,9 +15,10 @@ export default function Playlist() {
   const [isRefreshing, setIsRefreshing] = useState<boolean>(false);
   const { playListInfo }: any = useLocalSearchParams();
   const parsedPlayList = playListInfo ? JSON.parse(playListInfo) : null;
-
+  const {user} = useSelector((state: any) => state.auth.user);
   const dispatch = useDispatch();
   const playListVideos = useSelector((state: any) => state.userProfile.playListVideos);
+  
 
   const getPlayListDetails = async () => {
     try {
@@ -72,12 +73,12 @@ export default function Playlist() {
             {parsedPlayList?.videoCount} videos
           </Text>
         </View>
-        <AntDesign
+        {user?._id === parsedPlayList?.owner?._id && <AntDesign
           name="setting"
           size={25}
           style={styles.settingsIcon}
           color="white"
-        />
+        />}
       </View>
     </View>
   );
@@ -115,8 +116,6 @@ const styles = StyleSheet.create({
   infoContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    // alignItems: 'center',
-    // paddingHorizontal: 16,
     marginTop: 10,
   },
   avatar: {
@@ -126,7 +125,6 @@ const styles = StyleSheet.create({
   },
   userContainer: {
     flexDirection: 'row',
-    // alignItems: 'center',
     gap: 10,
   },
   title: {

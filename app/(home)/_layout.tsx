@@ -3,10 +3,12 @@ import Ionicons from "@expo/vector-icons/Ionicons";
 import { Image, StyleSheet, View, TouchableOpacity } from "react-native";
 import AntDesign from "@expo/vector-icons/AntDesign";
 import { useSelector } from "react-redux";
+import MaterialIcons from '@expo/vector-icons/MaterialIcons';
+
 
 export default function HomeLayout() {
-  const user = useSelector((state: any) => state.auth.user);
-  const userAvatar = user?.user.avatar;
+  const user = useSelector((state: any) => state.auth?.user);
+  const userAvatar = user?.user?.avatar;
 
   const segments = useSegments();
   const router = useRouter();
@@ -14,6 +16,15 @@ export default function HomeLayout() {
   if (segments.length > 1) {
     isHomePage = false;
   }
+
+  const handlePress = () => {
+    router.push({
+      pathname:'/(profile)',
+      params: {
+        userDetails: JSON.stringify(user?.user),
+      },
+    });
+  };
 
   return (
     <View style={styles.container}>
@@ -52,7 +63,7 @@ export default function HomeLayout() {
             tabBarIcon: ({ color, focused }) => (
               <Ionicons
                 name={focused ? "home" : "home-outline"}
-                size={24}
+                size={21}
                 color={color}
               />
             ),
@@ -65,9 +76,9 @@ export default function HomeLayout() {
           options={{
             title: "Subscriptions",
             tabBarIcon: ({ color, focused }) => (
-              <Ionicons
+              <MaterialIcons
                 name={focused ? "people" : "people-outline"}
-                size={24}
+                size={22}
                 color={color}
               />
             ),
@@ -80,8 +91,8 @@ export default function HomeLayout() {
           options={{
             title: "Search",
             tabBarIcon: ({ color, focused }) => (
-              <AntDesign
-                name={focused ? "search1" : "search1"}
+              <Ionicons
+                name={focused ? "search" : "search-outline"}
                 size={24}
                 color={color}
               />
@@ -112,6 +123,7 @@ export default function HomeLayout() {
                     styles.avatarWrapper,
                     focused && styles.avatarFocused,
                   ]}
+                  // onPress={() => handlePress}
                 >
                   <Image
                     source={{ uri: userAvatar }}
@@ -123,9 +135,16 @@ export default function HomeLayout() {
                   name="person"
                   size={24}
                   color={color}
+                  // onPress={() => handlePress}
                 />
               )
             ),
+          }}
+          listeners={{
+            tabPress: (e) => {
+              e.preventDefault();
+              handlePress()
+            }
           }}
         />
       </Tabs>
@@ -170,8 +189,8 @@ const styles = StyleSheet.create({
     borderColor: "white",
   },
   userAvatar: {
-    width: 30,
-    height: 30,
+    width: 29,
+    height: 29,
     borderRadius: 15,
   },
 });

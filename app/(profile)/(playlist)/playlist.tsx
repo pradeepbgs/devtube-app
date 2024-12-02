@@ -20,15 +20,15 @@ export default function Playlist() {
   const playListVideos = useSelector((state: any) => state.userProfile.playListVideos);
   
 
-  const getPlayListDetails = async () => {
+  const getPlayListvideos = async () => {
     try {
       if (!parsedPlayList) return;
-      const res = await getPlayListVideos(parsedPlayList._id);
+      const res = await getPlayListVideos(parsedPlayList?.id);
       if (res) {
         dispatch(setPlayListVideos(res));
       }
     } catch (error: any) {
-      alert(`Error while fetching playlist details: ${error.message}`);
+      // alert(`Error while fetching playlist details: ${error.message}`);
     } finally {
       setLoading(false);
     }
@@ -36,19 +36,16 @@ export default function Playlist() {
 
   const handleRefresh = async () => {
     setIsRefreshing(true);
-    await getPlayListDetails();
+    await getPlayListvideos();
     setIsRefreshing(false);
   };
 
   useEffect(() => {
-    getPlayListDetails();
+    getPlayListvideos();
   }, [parsedPlayList?._id]);
 
-  if (loading) {
-    return LoadingSpinner();
-  }
 
-  const videos = playListVideos?.videos || [];
+  const videos = playListVideos || [];
 
   const renderHeader = () => (
     <View style={styles.headerContainer}>
@@ -73,7 +70,7 @@ export default function Playlist() {
             {parsedPlayList?.videoCount} videos
           </Text>
         </View>
-        {user?._id === parsedPlayList?.owner?._id && <AntDesign
+        {user?.id === parsedPlayList?.owner?.id && <AntDesign
           name="setting"
           size={25}
           style={styles.settingsIcon}
@@ -85,15 +82,17 @@ export default function Playlist() {
 
   return (
     <View style={styles.container}>
+      {loading ? LoadingSpinner() :
       <AnimatedFlatList
-        data={videos}
-        keyExtractor={(item: any) => item._id}
-        renderItem={({ item }) => <VideoListingCard video={item} />}
-        contentContainerStyle={styles.listContainer}
-        ListHeaderComponent={renderHeader}
-        refreshing={isRefreshing}
-        onRefresh={handleRefresh}
+      data={videos}
+      keyExtractor={(item: any) => item.id}
+      renderItem={({ item }) => <VideoListingCard video={item} />}
+      contentContainerStyle={styles.listContainer}
+      ListHeaderComponent={renderHeader}
+      refreshing={isRefreshing}
+      onRefresh={handleRefresh}
       />
+    }
     </View>
   );
 }

@@ -4,7 +4,7 @@ import { formatDuration, timeAgo } from '@/utils/timeAgo';
 import { useRouter } from 'expo-router';
 
 export default function VideoListingCard({ video}: { video: any }) {
-  const createdAgo = timeAgo(video?.createdAt)
+  const createdAgo = timeAgo(video?.createdAt ?? video?.created_at)
   const formattedDuration = formatDuration(video?.duration);
   const router = useRouter()
 
@@ -15,6 +15,7 @@ export default function VideoListingCard({ video}: { video: any }) {
     })
   };
   
+  // console.log(video)
   
   return (
     <TouchableOpacity 

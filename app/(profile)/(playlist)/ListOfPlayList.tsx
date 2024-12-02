@@ -17,7 +17,6 @@ export default function ListOfPlayList({header,fectUserDetails}:any) {
   const [isPageRefreshing,setIsPageRefreshing] = useState<boolean>(false)
   const { userDetails }: any = useLocalSearchParams();
   const parsedUser = userDetails ? JSON.parse(userDetails) : null;
-  const localUser = useSelector((state: any) => state.auth.user);
 
   const playList = useSelector((state: any) => state.userProfile.playLists);
   const renderPlayListCard = useCallback(({ item }: any) => <PlayListCard playList={item} />, []);
@@ -30,10 +29,11 @@ export default function ListOfPlayList({header,fectUserDetails}:any) {
     // }
     setLoading(true);
     try {
-      const data = await getUserPlayLists(parsedUser?._id);
+      const data = await getUserPlayLists(parsedUser?.id);
+      console.log('playlllllistttt',data)
       dispatch(setPlayLists(data))
     } catch (error:any) {
-      alert(`Something went wrong while fetching user profile : ${error}`)
+      // alert(`Something went wrong while fetching user profile : ${error}`)
       // console.log("Something went wrong while fetching user profile", error)
     } finally {
       setLoading(false);
@@ -54,7 +54,6 @@ export default function ListOfPlayList({header,fectUserDetails}:any) {
     fetchData()
   }, []);
 
-
   if(playList.length === 0){
     return (
       <>
@@ -69,9 +68,7 @@ export default function ListOfPlayList({header,fectUserDetails}:any) {
 
   return (
     <View>
-      {
-       loading ? LoadingSpinner()
-       :  <AnimatedFlatList
+    <AnimatedFlatList
        style={styles.container}
        data={playList}
        keyExtractor={(item: any, index) => item?._id ?? index.toString()} 
@@ -85,7 +82,7 @@ export default function ListOfPlayList({header,fectUserDetails}:any) {
          ) : null
        }
        />
-      }      
+           
     </View>
 
   )

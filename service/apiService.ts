@@ -24,42 +24,45 @@ export const getVideoDetails = async (videoId: string) => {
 
 export const getUserProfileData = async (username: string) => {
   const res = await axios.get(
-    `${API_URI}/api/v1/users/c/${username}`
+    `${API_URI}/api/v1/user/c/${username}/`
   );
-  if(res) return res?.data?.data
+  if(res) return res?.data
   return []
 };
 
-export const fetchUserVideosData = async (userId: string) => {
-  const accessToken = await SecureStore.getItemAsync("accessToken");
-  const response = await axios.get(
-    `${API_URI}/api/v1/videos/c/${userId}`,
-    {
+export const fetchUserVideosData = async (userId:number) => {
+  try {
+    const accessToken = await SecureStore.getItemAsync("accessToken");
+    const response = await axios.get(`${API_URI}/api/v1/video/c/${userId}`, {
       headers: {
         Authorization: `Bearer ${accessToken}`,
       },
       withCredentials: true,
-    }
-  );
-  return response?.data?.data || [];
-}
+    });
+
+    return response?.data?.data ?? [] // Return data object with videos and owner
+  } catch (error) {
+    console.error('Error fetching videos:', error);
+    return null;
+  }
+};
+
 
 export const getUserPlayLists = async (userId: string) => {
-  const accessToken = await SecureStore.getItemAsync("accessToken");
-  const response = await axios.get(`${API_URI}/api/v1/playlists/user/${userId}`,
+  const response = await axios.get(`${API_URI}/api/v1/playlist/user/${userId}/`,
     {withCredentials: true});
   return response?.data?.data || [];
 }
 
 export const getPlayListVideos = async (playListId: string) => {
 
-  const response = await axios.get(`${API_URI}/api/v1/playlists/${playListId}`,
+  const response = await axios.get(`${API_URI}/api/v1/playlist/${playListId}/`,
     {withCredentials: true, });
     return response?.data?.data ?? []
 }
 
 export const logoutUser = async (accessToken:string) => {
-  const response = await axios.post(`${API_URI}/api/v1/users/logout`, null,{
+  const response = await axios.post(`${API_URI}/api/v1/user/logout/`, null,{
     headers: {
       Authorization: `Bearer ${accessToken}`,
     },
@@ -77,4 +80,5 @@ export const subscribe = async (channelId:string,accessToken:string) => {
       withCredentials: true
     }
   );
+  return response?.data || [];
 }

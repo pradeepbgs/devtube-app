@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import { StyleSheet, View, FlatList, Text, TouchableOpacity, ScrollView , ActivityIndicator, Animated} from "react-native";
 import VideoCard from "@/components/VideoCard";
 import axios from "axios";
@@ -17,7 +17,7 @@ export default function Index() {
   const [isPageRefreshing,setIsPageRefreshing] = useState<boolean>(false)
 
   const bounceAnim = useRef(new Animated.Value(1)).current;
-  
+  const renderVideoCard = useCallback(({ item }:any) => <VideoCard video={item} />, [])
 
   const fetchHomeVideos = async () => {
     const isPagination = page > 1;
@@ -26,7 +26,7 @@ export default function Index() {
 
     try {
       let query = selectedCategory ?? "";
-      const response = await axios.get(`${API_URI}/api/v1/videos?page=${page}&query=${query}`, {
+      const response = await axios.get(`${API_URI}/api/v1/video?page=${page}&query=${query}`, {
         withCredentials: true,
       });
       const newVideos = response?.data?.data || [];
@@ -90,7 +90,9 @@ export default function Index() {
               onPress={() => handleCategorySelect(category)}
               key={category}
               >
-              <Text style={styles.categoryText}>
+              <Text 
+              key={category}
+              style={styles.categoryText}>
                 {category}
               </Text>
               </TouchableOpacity>
@@ -126,7 +128,7 @@ export default function Index() {
       style={styles.videocard}
         data={videos}
         keyExtractor={(item:any, index) => item?._id ?? index.toString()}
-        renderItem={({ item }) => <VideoCard video={item} />}
+        renderItem={renderVideoCard}
         showsVerticalScrollIndicator={false}
         onEndReached={handleEndReached}
         onEndReachedThreshold={0.5}

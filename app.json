@@ -4,10 +4,17 @@
     "slug": "devtube",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/icon.png",
+    "icon": "./assets/images/react-logo.png",
     "scheme": "myapp",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
+    "expo":{
+      "splash": {
+      "image": "./assets/splash.png", 
+      "resizeMode": "contain", 
+      "backgroundColor": "#000000"
+      }
+    },
     "ios": {
       "supportsTablet": true
     },

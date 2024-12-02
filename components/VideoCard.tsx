@@ -8,7 +8,8 @@ const { width } = Dimensions.get('window');
 
 const VideoCard = ({ video, onPress }: any) => {
   const formattedDuration = formatDuration(video?.duration);
-  const timeDifference = timeAgo(video.createdAt);
+  const timeDifference = timeAgo(video?.createdAt);
+ 
 
   const router = useRouter();
 

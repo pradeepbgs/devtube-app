@@ -27,28 +27,33 @@ export default function Login({ navigation }: any) {
 
   const handleLogin = async () => {
     setLoading(true);
-    setError(null); 
+    setError(null);
     try {
-      signinSchema.parse({ identifier: email, password });
+      // signinSchema.parse({ identifier: username, password });
+      const data = new FormData()
+      data.append('username', username)
+      data.append('password', password)
       const response = await axios.post(
-        `${API_URI}/api/v1/users/login`,
+        `${API_URI}/api/v1/user/login/`,
+        data,
         {
-          email: email,
-          password,
-        },
-        {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          },
           withCredentials: true,
         }
       );
-      const { user } = response.data.data;
+      // console.log(response.data)
+      const { user } = response.data;
+      // console.log('this is user',user)
       await SecureStore.setItemAsync('user', JSON.stringify(user));
-      await SecureStore.setItemAsync('accessToken', response.data.data.accessToken);
-      await SecureStore.setItemAsync('refreshToken', response.data.data.refreshToken);
+      await SecureStore.setItemAsync('accessToken', response.data.user.accessToken);
+      await SecureStore.setItemAsync('refreshToken', response.data.user.refreshToken);
       dispatch(login({ isLoggedIn: true, user: user }));
       router.push('/(home)');
     } catch (error: any) {
       setError(error?.response?.data?.message || 'An error occurred during login.');
-      alert(`Login error: ${error?.response?.data?.message || 'Please try again later.'}`);
+      // alert(`Login error: ${error?.response?.data?.message || 'Please try again later.'}`);
     } finally {
       setLoading(false);
     }
@@ -78,19 +83,19 @@ export default function Login({ navigation }: any) {
         });
       }
 
-      const response = await axios.post(`${API_URI}/api/v1/users/register`, data, {
+      const response = await axios.post(`${API_URI}/api/v1/user/register/`, data, {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
 
       if (response.data.success) {
         setIsRegistering(false);
-        alert('Registration successful. You can now log in.');
+        // alert('Registration successful. You can now log in.');
       } else {
         throw new Error('Registration failed. Please try again.');
       }
     } catch (error: any) {
       setError(error?.response?.data?.message || 'An error occurred during registration.');
-      alert(`Registration error: ${error?.response?.data?.message || 'Please try again later.'}`);
+      // alert(`Registration error: ${error?.response?.data?.message || 'Please try again later.'}`);
     } finally {
       setLoading(false);
     }
@@ -125,10 +130,10 @@ export default function Login({ navigation }: any) {
           </TouchableOpacity>
 
           <Input
-            label="Username"
-            value={username}
-            onChangeText={setUsername}
-            placeholder="Enter your username"
+            label="Email"
+            value={email}
+            onChangeText={setEmail}
+            placeholder="Enter your email"
           />
           <Input
             label="Full Name"
@@ -139,10 +144,10 @@ export default function Login({ navigation }: any) {
         </>
       )}
       <Input
-        label="Email"
-        value={email}
-        onChangeText={setEmail}
-        placeholder="Enter your email"
+        label="Username"
+        value={username}
+        onChangeText={setUsername}
+        placeholder="Enter your username"
       />
 
       <Input
@@ -168,10 +173,13 @@ export default function Login({ navigation }: any) {
         onPress={isRegistering ? handleRegister : handleLogin}
         disabled={loading}
       >
-        <Text style={styles.buttonText}>{isRegistering ? 'Register' : 'Login'}</Text>
+        {
+          loading ? 
+          <Text style={styles.buttonText}>...</Text>
+          :
+          <Text style={styles.buttonText}>{isRegistering ? 'Register' : 'Login'}</Text>
+        }
       </TouchableOpacity>
-
-      {loading && <Text style={styles.loadingText}>Loading...</Text>}
 
       {/* Toggle between Login and Register */}
       <TouchableOpacity style={styles.switchButton} onPress={() => setIsRegistering(!isRegistering)}>
@@ -179,12 +187,10 @@ export default function Login({ navigation }: any) {
           {isRegistering
             ? 'Already have an account? '
             : 'Don’t have an account? '}
-          {
-            loading ? '...'
-              :
-              <Text style={{ color: 'skyblue' }}>
-                {isRegistering ? 'Login' : 'Register'}
-              </Text>}
+          <Text 
+          style={{ color: 'skyblue' }}>
+            {isRegistering ? 'Login' : 'Register'}
+          </Text>
         </Text>
       </TouchableOpacity>
     </ScrollView>

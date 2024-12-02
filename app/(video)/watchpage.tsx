@@ -39,16 +39,17 @@ export default function Watchpage() {
   // Fetch video details from API
   const getVideoDetails = async () => {
     setLoading(true)
-    if (!videoData?._id) return;
+    if (!videoData?.id) return;
 
     const accessToken = await SecureStore.getItemAsync("accessToken");
 
     try {
-      const response = await axios.get(`${API_URI}/api/v1/videos/${videoData._id}`, {
-        headers: { Authorization: `Bearer ${accessToken}` },
+      const response = await axios.get(`${API_URI}/api/v1/video/video-details/${videoData.id}`, {
+        headers: { 
+          ...(accessToken && { Authorization: `Bearer ${accessToken}` })
+        },
         withCredentials: true,
       });
-
       if (response.data.data) {
         setVideo(response.data.data);
       }
@@ -71,7 +72,7 @@ export default function Watchpage() {
 
     try {
       const response = await axios.post(
-        `${API_URI}/api/v1/subscriptions/c/${channelId}`,
+        `${API_URI}/api/v1/subscription/toggle/${channelId}/`,
         null,
         {
           headers: { Authorization: `Bearer ${accessToken}` },
@@ -79,66 +80,68 @@ export default function Watchpage() {
         }
       );
 
-      if (response.data.message === "subscribed successfully") {
+      if (response.data.message === "Subscribed successfully") {
         setVideo((prevVideo: any) => ({
           ...prevVideo,
-          isSubscribed: true,
-          subscribersCount: prevVideo?.subscribersCount + 1
+          is_subscribed: true,
+          subscribers: prevVideo?.subscribers + 1
         }));
-      } else if (response.data.message === "unsubscribed successfully") {
+      } else if (response.data.message === "Unsubscribed successfully") {
         setVideo((prevVideo: any) => ({
           ...prevVideo,
-          isSubscribed: false,
-          subscribersCount: prevVideo?.subscribersCount - 1
+          is_subscribed: false,
+          subscribers: prevVideo?.subscribers - 1
         }));
       }
     } catch (error: any) {
-      alert(`Error toggling subscription: ${JSON.stringify(error.response?.data)}`);
+      // alert(`Error toggling subscription: ${JSON.stringify(error.response?.data)}`);
     }
   };
 
   const toggleLike = async () => {
+
     if (!isLoggedIn) {
       setLogoutPopupVisible(true);
       return;
     }
-    if (!video?._id) return;
+    if (!video?.id) return;
     handleBounce(bounceAnim)
     const accessToken = await SecureStore.getItemAsync("accessToken");
     try {
-      const res = await axios.post(`${API_URI}/api/v1/likes/toggle/v/${video?._id}`, null, {
+      const res = await axios.post(`${API_URI}/api/v1/like/toggle/${video?.id}/`, null, {
         headers: { Authorization: `Bearer ${accessToken}` },
         withCredentials: true,
       })
-      if (res.data.message === "liked video") {
+      if (res.data.message === "Video liked successfully") {
         setVideo((prevVideo: any) => ({
           ...prevVideo,
-          isLiked: true,
-          likesCount: prevVideo?.likesCount + 1
+          is_liked: true,
+          likes: prevVideo?.likes + 1
         }));
-      } else if (res.data.message === "unliked video") {
+      } else if (res.data.message === "Video unliked successfully") {
         setVideo((prevVideo: any) => ({
           ...prevVideo,
-          isLiked: false,
-          likesCount: prevVideo?.likesCount - 1
+          is_liked: false,
+          likes: prevVideo?.likes - 1
         }));
       }
     } catch (error: any) {
-      alert(`Error toggling subscription: ${JSON.stringify(error.response?.data)}`);
+      console.log(error?.response?.data)
+      // alert(`Error toggling subscription: ${JSON.stringify(error.response?.data)}`);
     }
   }
 
   const getSuggestionVideo = async () => {
     setsuggestionVideoLoading(true)
     try {
-      const response = await axios.get(`${API_URI}/api/v1/videos?page=${page}`, {
+      const response = await axios.get(`${API_URI}/api/v1/video?page=${page}`, {
         withCredentials: true,
       });
       const newVideos = response?.data?.data || [];
       if (page === 1) {
         setsuggestionVideos(newVideos);
       } else {
-        setsuggestionVideos((prevVideos): any => [...prevVideos, ...newVideos]);
+        setsuggestionVideos((prevVideos:any) => [...prevVideos, ...newVideos]);
       }
     } catch (error) {
       console.log("Error fetching videos:", error);
@@ -156,11 +159,10 @@ export default function Watchpage() {
   };
 
 
-
   useEffect(() => {
     getVideoDetails();
     getSuggestionVideo()
-  }, [videoData?._id]);
+  }, [videoData?.id]);
 
 
   const renderHeader = () => (
@@ -175,7 +177,11 @@ export default function Watchpage() {
             </Text>
         </Text>
         {/* description  */}
-        <TouchableOpacity style={styles.descriptionConatiner} onPress={() => setIsExpanded(!isExpanded)} activeOpacity={0.9}>
+        <TouchableOpacity 
+        style={styles.descriptionConatiner} 
+        onPress={() => setIsExpanded(!isExpanded)}
+        activeOpacity={1}
+        >
           <Text
             style={[
               styles.descriptionText,
@@ -200,16 +206,16 @@ export default function Watchpage() {
             {/* <View> */}
               <Text style={styles.ownerText}>{video?.owner?.fullname || 'Unknown User'}</Text>
               <Text style={styles.subscribersText}>
-                {video?.subscribersCount || 0} 
+                {video?.subscribers || 0} 
               </Text>
             {/* </View> */}
           </View>
           <TouchableOpacity
-            style={video?.isSubscribed ? styles.subscribeButton : styles.unsubscribeButton}
-            onPress={() => toggleSubscribe(video?.owner?._id)}
+            style={video?.is_subscribed ? styles.subscribeButton : styles.unsubscribeButton}
+            onPress={() => toggleSubscribe(video?.owner?.id)}
           >
-            <Text style={video?.isSubscribed ? styles.subscribeText : styles.unsubscribeText}>
-              {video?.isSubscribed ? 'Subscribed' : 'Subscribe'}
+            <Text style={video?.is_subscribed ? styles.subscribeText : styles.unsubscribeText}>
+              {video?.is_subscribed ? 'Subscribed' : 'Subscribe'}
             </Text>
           </TouchableOpacity>
         </View>
@@ -225,11 +231,11 @@ export default function Watchpage() {
               ]}
             >
               <AntDesign
-                name={video?.isLiked ? "like1" : "like2"}
+                name={video?.is_liked ? "like1" : "like2"}
                 size={14}
-                color={video?.isLiked ? "green" : "white"}
+                color={video?.is_liked ? "green" : "white"}
               />
-              <Text style={styles.likeText}>{video?.likesCount}</Text>
+              <Text style={styles.likeText}>{video?.likes ? video.likes : 0}</Text>
             </Animated.View>
           </TouchableOpacity>
           <TouchableOpacity style={styles.shareButton} >
@@ -261,7 +267,7 @@ export default function Watchpage() {
   return (
     <>
       <View style={styles.container}>
-       <VideoScreen url={video?.videoFile} />
+       <VideoScreen url={video?.url} />
       
       <View style={styles.commentContainer}>
         {

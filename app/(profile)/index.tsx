@@ -6,10 +6,9 @@ import {
   View,
   TouchableOpacity,
   FlatList,
-  ScrollView,
 } from "react-native";
-import React, { useCallback, useEffect, useRef, useState } from "react";
-import { router, useLocalSearchParams, useRouter } from "expo-router";
+import React, { useCallback, useEffect, useState } from "react";
+import { router, useLocalSearchParams } from "expo-router";
 import { useDispatch, useSelector } from "react-redux";
 import { setUser, setUserVideos } from "@/redux/userProfileSlice";
 import { LoadingSpinner } from "@/components/loadSpinner";
@@ -41,30 +40,32 @@ export default function Index() {
   const dispatch = useDispatch()
   const renderVideoCard = useCallback(({ item }: any) => <VideoListingCard video={item} />, []);
 
+
   const getUserProfile = async () => {
-    if (!parsedUser || !parsedUser._id) return;
+    if (!parsedUser || !parsedUser.id) return;
     try {
       const userData = await getUserProfileData(parsedUser?.username)
-      if (userData) {
-        dispatch(setUser(userData));
+      if (userData.data) {
+        dispatch(setUser(userData.data));
       }
     } catch (error) {
-      alert("Something went wrong while fetching user profile")
+      // alert("Something went wrong while fetching user profile")
       console.log("Something went wrong while fetching user profile", error)
     } finally {
       setLoading(false);
     }
   };
 
-  const fetchUserVideos = async (userId: string) => {
+  const fetchUserVideos = async (userId: number) => {
     // if(userVideos.length > 0) return
-    if (!parsedUser || !parsedUser._id) return;
+    if (!userId) return;
     setNextUserVideoLoading(true);
     try {
       const newVideos = await fetchUserVideosData(userId)
+      // console.log('fetched videos',newVideos)
       dispatch(setUserVideos(newVideos))
     } catch (error) {
-      alert("Something went wrong while fetching user videos")
+      // alert("Something went wrong while fetching user videos")
       console.log("Something went wrong while fetching user videos", error)
     } finally {
       setNextUserVideoLoading(false);
@@ -82,7 +83,7 @@ export default function Index() {
       await SecureStore.deleteItemAsync("refreshToken");
       router.push('/')
     } catch (error) {
-      alert(`something went wrong while logging out user: ${error}`)
+      // alert(`something went wrong while logging out user: ${error}`)
     } finally{
       setLogoutPopupVisible(false)
     }
@@ -92,30 +93,31 @@ export default function Index() {
     if (!parsedUser?._id) return;
     const accessToken = await SecureStore.getItemAsync("accessToken");
     try {
-      const response :any = await subscribe(parsedUser?._id, accessToken as string)
-      if (response?.data?.message === "subscribed successfully") {
+      const response :any = await subscribe(parsedUser?.id, accessToken as string)
+      if (response?.message === "Subscribed successfully") {
         dispatch(setUser({
           ...user,
-          isSubscribed: true,
-          subscribersCount: user?.subscribersCount + 1
+          is_subscribed: true,
+          subscribers: user?.subscribers + 1
         }))
       } 
-      else if (response?.data?.message === "unsubscribed successfully") {
+      else if (response?.message === "Unsubscribed successfully") {
         dispatch(setUser({
           ...user,
-          isSubscribed: false,
-          subscribersCount: user?.subscribersCount - 1
+          is_subscribed: false,
+          subscribers: user?.subscribers - 1
         }))
       }
     } catch (error) {
-      alert(`something went wrong while subscribing: ${error}`)
+      // alert(`something went wrong while subscribing: ${error}`)
     }
   }
 
   useEffect(() => {
+    // dispatch(setUser(parsedUser))
     const fetchData = async () => {
       await getUserProfile();
-      await fetchUserVideos(parsedUser?._id);
+      await fetchUserVideos(parsedUser?.id);
     };
     setLoading(true);
     fetchData().finally(() => setLoading(false));
@@ -125,7 +127,12 @@ export default function Index() {
     return LoadingSpinner("small", "#fff")
   }
 
-  console.log(user?.isSubscribed)
+  const handleRefresh = async () => {
+    setIsPageRefreshing(true)
+    await fetchUserVideos(parsedUser?.id)
+    await getUserProfile()
+    setIsPageRefreshing(false)
+  };
 
   if (!userDetails) {
     return (
@@ -173,7 +180,7 @@ export default function Index() {
                   @{user?.username || "No username"}
                 </Text>
               </View>
-              <Text style={styles.statCount}>{user?.subscribersCount || "0"}</Text>
+              <Text style={styles.statCount}>{user?.subscribers || "0"}</Text>
               <Text style={styles.statLabel}>Followers</Text>
             </View>
             {/* <View style={styles.stat}>
@@ -181,7 +188,7 @@ export default function Index() {
               <Text style={styles.statLabel}>Posts</Text>
             </View> */}
             <View style={styles.actionsContainer}>
-              {localUser?._id === user?._id ? (
+              {localUser?.id === user?.id ? (
                 <TouchableOpacity
                   onPress={() => setLogoutPopupVisible(true)}
                   style={styles.actionButton}>
@@ -194,7 +201,7 @@ export default function Index() {
                   }
                   }
                   style={styles.actionButton}>
-                  <Text style={styles.actionButtonText}>{user?.isSubscribed ? 'Subscribed':'Subscribe'}</Text>
+                  <Text style={styles.actionButtonText}>{user?.is_subscribed ? 'Subscribed':'Subscribe'}</Text>
                 </TouchableOpacity>
               )}
             </View>
@@ -243,18 +250,14 @@ export default function Index() {
     </Animated.ScrollView>
   )
 
-  const handleRefresh = async () => {
-    setIsPageRefreshing(true)
-    await fetchUserVideos(parsedUser?._id)
-    await getUserProfile()
-    setIsPageRefreshing(false)
-  };
-
 
   if (activeTab === 'Home' && userVideos?.length === 0) {
     return (
       <>
         {renderProfileHeader()}
+        {
+          loading && LoadingSpinner()
+        }
         <View style={{ flex: 1, justifyContent: "center", alignItems: "center", backgroundColor: 'black' }}>
           <AntDesign name="frowno" size={30} color="white" />
           <Text style={{ color: "#fff", fontSize: 16 }}>No Videos Found</Text>
@@ -319,7 +322,7 @@ const styles = StyleSheet.create({
     borderColor: "white",
   },
   userName: {
-    color: "#EEEEEE",
+    color: "#7BD3EA",
     fontSize: 14,
   },
   fullname: {

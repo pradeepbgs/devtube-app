@@ -48,7 +48,7 @@ export const fetchUserVideosData = async (userId:number) => {
 };
 
 
-export const getUserPlayLists = async (userId: string) => {
+export const getUserPlayLists = async (userId: number) => {
   const response = await axios.get(`${API_URI}/api/v1/playlist/user/${userId}/`,
     {withCredentials: true});
   return response?.data?.data || [];
@@ -71,10 +71,33 @@ export const logoutUser = async (accessToken:string) => {
   return response?.data?.data || [];
 }
 
-export const subscribe = async (channelId:string,accessToken:string) => {
+export const subscribe = async (channelId:number,accessToken:string) => {
   const response = await axios.post(
     `${API_URI}/api/v1/subscriptions/c/${channelId}`,
     null,
+    {
+      headers: { Authorization: `Bearer ${accessToken}` },
+      withCredentials: true
+    }
+  );
+  return response?.data || [];
+}
+
+export const addVideoToPlayList = async (playListId:number,videoId:number,accessToken:string) => {
+  const response = await axios.post(
+    `${API_URI}/api/v1/playlist/add-video/${playListId}/${videoId}/`,
+    null,
+    {
+      headers: { Authorization: `Bearer ${accessToken}` },
+      withCredentials: true
+    }
+  );
+  return response?.data || [];
+}
+
+export const removeVideoToPlayList = async (playListId:number,videoId:number,accessToken:string) => {
+  const response = await axios.delete(
+    `${API_URI}/api/v1/playlist/remove-video/${playListId}/${videoId}/`,
     {
       headers: { Authorization: `Bearer ${accessToken}` },
       withCredentials: true

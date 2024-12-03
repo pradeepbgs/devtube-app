@@ -2,40 +2,47 @@ import { Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import React from 'react';
 import { formatDuration, timeAgo } from '@/utils/timeAgo';
 import { useRouter } from 'expo-router';
+import Entypo from '@expo/vector-icons/Entypo';
+export default function VideoListingCard({ video, showRemoveOption, onRemove }:
+  { video: any, showRemoveOption?: boolean, onRemove?: (videoId: number) => void }) {
 
-export default function VideoListingCard({ video}: { video: any }) {
+
   const createdAgo = timeAgo(video?.createdAt ?? video?.created_at)
   const formattedDuration = formatDuration(video?.duration);
   const router = useRouter()
 
-  const handlePress = (video:any) => {
+  const handlePress = (video: any) => {
     router.push({
       pathname: '/(video)/watchpage',
       params: { videoDeatails: JSON.stringify(video) },
     })
   };
-  
-  // console.log(video)
-  
+
+  const handlePopupRemoveVideo = () => {
+    if (onRemove) {
+      onRemove(video?.id);
+    }
+  };
+
   return (
-    <TouchableOpacity 
-    onPress={() => handlePress(video)}
-    style={styles.container} activeOpacity={0.98}>
+    <TouchableOpacity onPress={() => handlePress(video)} style={styles.container} activeOpacity={0.98}>
       {/* Thumbnail on the left */}
       <View>
-      <Image source={{ uri: video?.thumbnail }} style={styles.thumbnail} />
-      <Text style={styles.videoDuration}>{formattedDuration}</Text>
+        <Image source={{ uri: video?.thumbnail }} style={styles.thumbnail} />
+        <Text style={styles.videoDuration}>{formattedDuration}</Text>
       </View>
 
       {/* Video details on the right */}
       <View style={styles.details}>
-        <Text style={styles.title} numberOfLines={2}>
-          {video?.title}
-        </Text>
-        <Text style={styles.meta}>
-          {video?.username} • {video?.views} views • {createdAgo}
-        </Text>
+        <Text style={styles.title} numberOfLines={2}> {video?.title} </Text>
+        <Text style={styles.meta}> {video?.username} • {video?.views} views • {createdAgo} </Text>
       </View>
+
+      {(
+        <TouchableOpacity onPress={handlePopupRemoveVideo} style={styles.removeIcon}>
+          <Entypo name="dots-three-horizontal" size={15} color="grey" />         
+         </TouchableOpacity>
+      )}
     </TouchableOpacity>
   );
 }
@@ -46,7 +53,7 @@ const styles = StyleSheet.create({
     padding: 4,
     marginBottom: 10,
     borderRadius: 8,
-    elevation: 3, 
+    elevation: 3,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
@@ -84,5 +91,9 @@ const styles = StyleSheet.create({
   meta: {
     fontSize: 14,
     color: '#adb5bd',
+  },
+  removeIcon: {
+    marginTop: 10,
+    paddingRight: 20,
   },
 });

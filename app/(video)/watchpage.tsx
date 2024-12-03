@@ -14,7 +14,8 @@ import { handleBounce } from '@/utils/bounce';
 import { LoadingSpinner } from '@/components/loadSpinner';
 import VideoListingCard from '@/components/VideoListingCard';
 import { PopUp } from '@/components/LogoutPopup';
-
+import {PlayListPopUp} from '@/components/PlayListPopUp';
+import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 
 const { width } = Dimensions.get('window');
 
@@ -26,12 +27,13 @@ export default function Watchpage() {
   const [suggestionVideoLoading, setsuggestionVideoLoading] = useState<boolean>(false)
   const [isExpanded, setIsExpanded] = useState<boolean>(false);
   const [logoutPopupVisible, setLogoutPopupVisible] = useState<boolean>(false);
+  const [playlistPopupVisible, setPlaylistPopupVisible] = useState<boolean>(false);
   const { videoDeatails }: any = useLocalSearchParams();
   const { isLoggedIn } = useSelector((state: any) => state.auth);
   const [isCommentOpened, setIsCommentOpened] = useState<boolean>(false)
   const videoData = videoDeatails ? JSON.parse(videoDeatails) : null;
   const createdAgo = timeAgo(videoData?.createdAt);
-
+  const localUser = useSelector((state:any) => state.auth.user.user)
   const router = useRouter();
   const bounceAnim = useRef(new Animated.Value(1)).current;
   const slideAnim = useRef(new Animated.Value(0)).current;
@@ -241,6 +243,13 @@ export default function Watchpage() {
           <TouchableOpacity style={styles.shareButton} >
             <AntDesign name="sharealt" size={13} color="white" />
           </TouchableOpacity>
+            {/* for playlist save  */}
+          <TouchableOpacity 
+            onPress={() => setPlaylistPopupVisible(true)}
+          style={styles.saveButton} >
+            <MaterialIcons name="playlist-add" size={17} color="white" />
+          </TouchableOpacity>
+
           <TouchableOpacity
             onPress={() => setIsCommentOpened(!isCommentOpened)}
             style={styles.commentButton} >
@@ -251,6 +260,13 @@ export default function Watchpage() {
             />
           </TouchableOpacity>
         </View>
+        <PlayListPopUp 
+        userId={localUser.id}
+        videoId={video?.id}
+        visible={playlistPopupVisible}
+        onClose={() => setPlaylistPopupVisible(false)}
+        />
+
         <PopUp 
         visible={logoutPopupVisible}
         onClose={() => setLogoutPopupVisible(false)}
@@ -286,9 +302,7 @@ export default function Watchpage() {
         onEndReachedThreshold={0.5}
         ListFooterComponent={
           suggestionVideoLoading ? (
-            <View style={styles.loadingContainer}>
-              <ActivityIndicator size="small" color="#00ff00" />
-            </View>
+            LoadingSpinner()
           ) : null
         }
       />
@@ -460,6 +474,14 @@ const styles = StyleSheet.create({
     backgroundColor: '#252422',
     padding: 6,
     paddingLeft: 15,
+    width: 55,
+    height: 35
+  },
+  saveButton: {
+    borderRadius: 80,
+    backgroundColor: '#252422',
+    padding: 8,
+    paddingLeft: 19,
     width: 55,
     height: 35
   },

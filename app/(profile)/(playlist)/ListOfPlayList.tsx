@@ -71,7 +71,7 @@ export default function ListOfPlayList({header,fectUserDetails}:any) {
     <AnimatedFlatList
        style={styles.container}
        data={playList}
-       keyExtractor={(item: any, index) => item?._id ?? index.toString()} 
+       keyExtractor={(item: any, index) => item?.id ?? index.toString()} 
        renderItem={renderPlayListCard}
        refreshing={isPageRefreshing}
        onRefresh={handleRefresh}

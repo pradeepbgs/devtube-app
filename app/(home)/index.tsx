@@ -4,7 +4,7 @@ import VideoCard from "@/components/VideoCard";
 import axios from "axios";
 import { API_URI } from "@/utils/api";
 
-const suggestionArray = ["All","JavaScript","Programming","Algorithms","Gaming","Videos","Web Development","System Programming"]
+const suggestionArray = ["All","Ai","LLMs","JavaScript","Programming","Algorithms","Gaming","Videos","Web Development","System Programming"]
 
 const AnimatedFlatList = Animated.createAnimatedComponent(FlatList)
 
@@ -26,6 +26,7 @@ export default function Index() {
 
     try {
       let query = selectedCategory ?? "";
+      console.log(query)
       const response = await axios.get(`${API_URI}/api/v1/video?page=${page}&query=${query}`, {
         withCredentials: true,
       });
@@ -67,7 +68,7 @@ export default function Index() {
 
   useEffect(() => {
     fetchHomeVideos();
-  }, [selectedCategory,page,]);
+  }, [selectedCategory,page]);
 
   if (loading) {
     return (

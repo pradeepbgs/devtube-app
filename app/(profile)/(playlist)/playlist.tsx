@@ -2,24 +2,26 @@ import { Animated, FlatList, StyleSheet, Text, View, Image, ActivityIndicator } 
 import React, { useEffect, useState } from 'react';
 import { useLocalSearchParams } from 'expo-router';
 import { useDispatch, useSelector } from 'react-redux';
-import { getPlayListVideos } from '@/service/apiService';
+import { getPlayListVideos, removeVideoToPlayList } from '@/service/apiService';
 import VideoListingCard from '@/components/VideoListingCard';
 import { setPlayListVideos } from '@/redux/userProfileSlice';
 import { LoadingSpinner } from '@/components/loadSpinner';
 import AntDesign from '@expo/vector-icons/AntDesign';
+import { PopUp } from '@/components/LogoutPopup';
 
 const AnimatedFlatList = Animated.createAnimatedComponent(FlatList);
 
 export default function Playlist() {
   const [loading, setLoading] = useState<boolean>(true);
   const [isRefreshing, setIsRefreshing] = useState<boolean>(false);
+  const [removeVideoPopUp,setRemoveVideoPopUp] = useState<boolean>(false)
+  const [removeVideoId, setRemoveVideoId] = useState<number>()
   const { playListInfo }: any = useLocalSearchParams();
   const parsedPlayList = playListInfo ? JSON.parse(playListInfo) : null;
   const {user} = useSelector((state: any) => state.auth.user);
   const dispatch = useDispatch();
   const playListVideos = useSelector((state: any) => state.userProfile.playListVideos);
   
-
   const getPlayListvideos = async () => {
     try {
       if (!parsedPlayList) return;
@@ -40,9 +42,25 @@ export default function Playlist() {
     setIsRefreshing(false);
   };
 
+  const handlePopUpForRemoveVideo = (videoId: number) => {
+    setRemoveVideoPopUp(true)
+    setRemoveVideoId(videoId)
+  };
+
+  const handleRemoveVideo = async () => {
+    // const accessToken = await SecureStore.getItemAsync("accessToken");
+    try {
+      const result = await removeVideoToPlayList(parsedPlayList?.id, removeVideoId!, user?.accessToken)
+      setRemoveVideoPopUp(false)
+      await getPlayListvideos()
+    } catch (error) {
+      // alert(`something went wrong while removing video from playlist: ${error}`)
+    }
+  }
+
   useEffect(() => {
     getPlayListvideos();
-  }, [parsedPlayList?._id]);
+  }, [parsedPlayList?.id,dispatch]);
 
 
   const videos = playListVideos || [];
@@ -77,6 +95,13 @@ export default function Playlist() {
           color="white"
         />}
       </View>
+      <PopUp 
+        visible={removeVideoPopUp}
+        onClose={()=>setRemoveVideoPopUp(false)}
+        onHandler={() =>handleRemoveVideo()}
+        title='Are you sure , you want to remove this video from playList'
+        nextBtn='Remove'
+      />
     </View>
   );
 
@@ -85,8 +110,12 @@ export default function Playlist() {
       {loading ? LoadingSpinner() :
       <AnimatedFlatList
       data={videos}
-      keyExtractor={(item: any) => item.id}
-      renderItem={({ item }) => <VideoListingCard video={item} />}
+      keyExtractor={(item: any,index:number) => item?.id ?? `key-${index}`}
+      renderItem={({ item }) => <VideoListingCard 
+      video={item} 
+      showRemoveOption={true} 
+      onRemove={handlePopUpForRemoveVideo} 
+      />}
       contentContainerStyle={styles.listContainer}
       ListHeaderComponent={renderHeader}
       refreshing={isRefreshing}

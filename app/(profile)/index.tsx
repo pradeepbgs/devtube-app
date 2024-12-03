@@ -21,6 +21,19 @@ import VideoListingCard from "@/components/VideoListingCard";
 import * as SecureStore from 'expo-secure-store'
 import { logout } from "@/redux/authSlice";
 import { PopUp } from "@/components/LogoutPopup";
+import Fontisto from '@expo/vector-icons/Fontisto';
+
+interface userT {
+  avatar?: string,
+  coverImage?: string,
+  email?: string,
+  id: number,
+  username: string,
+  fullName?: string,
+  createdAt: string,
+  subscribers: number,
+  is_subscribed: boolean
+}
 
 const { width } = Dimensions.get("window");
 const AnimatedFlatList = Animated.createAnimatedComponent(FlatList);
@@ -32,19 +45,23 @@ export default function Index() {
   const [logoutPopupVisible, setLogoutPopupVisible] = useState<boolean>(false);
   const [activeTab, setActiveTab] = useState<string>("Home");
   const { userDetails }: any = useLocalSearchParams();
-  const localUser = useSelector((state: any) => state.auth?.user?.user);
-  const parsedUser = userDetails ? JSON.parse(userDetails) : {};
+  const localUser: userT = useSelector((state: any) => state.auth?.user?.user);
+  const parsedUser: userT = userDetails ? JSON.parse(userDetails) : {};
   const { user } = useSelector((state: any) => state.userProfile)
   const { userVideos } = useSelector((state: any) => state.userProfile)
-  
+
   const dispatch = useDispatch()
   const renderVideoCard = useCallback(({ item }: any) => <VideoListingCard video={item} />, []);
+
+  const joinedAgo = new Date(user?.createdAt)
+  const monthCreated = joinedAgo.toLocaleString('default', { month: 'long' });
+  const yearCreated = joinedAgo.getFullYear();  
 
 
   const getUserProfile = async () => {
     if (!parsedUser || !parsedUser.id) return;
     try {
-      const userData = await getUserProfileData(parsedUser?.username)
+      const userData = await getUserProfileData(parsedUser.username)
       if (userData.data) {
         dispatch(setUser(userData.data));
       }
@@ -84,23 +101,23 @@ export default function Index() {
       router.push('/')
     } catch (error) {
       // alert(`something went wrong while logging out user: ${error}`)
-    } finally{
+    } finally {
       setLogoutPopupVisible(false)
     }
   };
 
   const toggleSubscribe = async () => {
-    if (!parsedUser?._id) return;
+    if (!parsedUser?.id) return;
     const accessToken = await SecureStore.getItemAsync("accessToken");
     try {
-      const response :any = await subscribe(parsedUser?.id, accessToken as string)
+      const response: any = await subscribe(parsedUser?.id, accessToken as string)
       if (response?.message === "Subscribed successfully") {
         dispatch(setUser({
           ...user,
           is_subscribed: true,
           subscribers: user?.subscribers + 1
         }))
-      } 
+      }
       else if (response?.message === "Unsubscribed successfully") {
         dispatch(setUser({
           ...user,
@@ -140,9 +157,9 @@ export default function Index() {
         <Text style={styles.message}>You're not signed in.</Text>
         <Text style={styles.subMessage}>Please sign in to view your profile.</Text>
         <TouchableOpacity style={styles.button} onPress={() => router.push('/login')}>
-          <Text 
-          onPress={() => router.push('/(auth)/login')}
-          style={styles.buttonText}>Sign In</Text>
+          <Text
+            onPress={() => router.push('/(auth)/login')}
+            style={styles.buttonText}>Sign In</Text>
         </TouchableOpacity>
       </View>
     );
@@ -181,7 +198,7 @@ export default function Index() {
                 </Text>
               </View>
               <Text style={styles.statCount}>{user?.subscribers || "0"}</Text>
-              <Text style={styles.statLabel}>Followers</Text>
+              <Text style={styles.statLabel}>Subscribers</Text>
             </View>
             {/* <View style={styles.stat}>
               <Text style={styles.statCount}>{user?.posts || "0"}</Text>
@@ -189,25 +206,37 @@ export default function Index() {
             </View> */}
             <View style={styles.actionsContainer}>
               {localUser?.id === user?.id ? (
-                <TouchableOpacity
+                <AntDesign
                   onPress={() => setLogoutPopupVisible(true)}
-                  style={styles.actionButton}>
-                  <Text style={styles.actionButtonText}>Logout</Text>
-                </TouchableOpacity>
+                 name="logout" size={23} color="red" />
               ) : (
                 <TouchableOpacity
-                  onPress={() =>{
+                  onPress={() => {
                     toggleSubscribe()
                   }
                   }
                   style={styles.actionButton}>
-                  <Text style={styles.actionButtonText}>{user?.is_subscribed ? 'Subscribed':'Subscribe'}</Text>
+                  <Text style={styles.actionButtonText}>{user?.is_subscribed ? 'Subscribed' : 'Subscribe'}</Text>
                 </TouchableOpacity>
               )}
             </View>
           </View>
         </View>
       </View>
+
+      {/* Joined Date */}
+      <View style={styles.joinedContainer}>
+        <Fontisto
+          name="date"
+          size={12}
+          color="green"
+          style={styles.dateIcon}
+        />
+        <Text style={styles.joinedAgo}>
+          {`Joined ${monthCreated} ${yearCreated}.`}
+        </Text>
+      </View>
+
 
       {/* Users videos , playlist */}
       <View style={styles.MainProfileContainer}>
@@ -313,6 +342,7 @@ const styles = StyleSheet.create({
     flex: 1,
     flexDirection: "row",
     marginTop: -25,
+    // padding:5
   },
   profileImage: {
     width: 90,
@@ -364,11 +394,12 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "center",
     marginTop: 16,
+    marginRight:10
   },
   actionButton: {
     backgroundColor: "#1E90FF",
-    paddingVertical: 6,
-    paddingHorizontal: 10,
+    paddingVertical: 5,
+    paddingHorizontal: 7,
     borderRadius: 50,
   },
   messageButton: {
@@ -377,6 +408,7 @@ const styles = StyleSheet.create({
   actionButtonText: {
     color: "white",
     fontWeight: "bold",
+    fontSize:11
   },
   statsMainConatainer: {
     flex: 1,
@@ -447,4 +479,20 @@ const styles = StyleSheet.create({
     color: 'white',
     fontWeight: 'bold',
   },
+  joinedContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 10,
+    // marginLeft: 5,
+    padding: 2,
+  },
+  dateIcon: {
+    marginRight: 8,
+  },
+  joinedAgo: {
+    color: '#adb5bd',
+    fontSize: 14,
+    // fontWeight: 'bold',
+  },
+
 });

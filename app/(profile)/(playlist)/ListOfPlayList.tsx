@@ -7,6 +7,7 @@ import PlayListCard from '@/components/PlayListCard';
 import { LoadingSpinner } from '@/components/loadSpinner';
 import { setPlayLists } from '@/redux/userProfileSlice';
 import AntDesign from '@expo/vector-icons/AntDesign';
+import { set } from 'zod';
 
 const AnimatedFlatList = Animated.createAnimatedComponent(FlatList)
 
@@ -18,7 +19,7 @@ export default function ListOfPlayList({header,fectUserDetails}:any) {
   const { userDetails }: any = useLocalSearchParams();
   const parsedUser = userDetails ? JSON.parse(userDetails) : null;
 
-  const playList = useSelector((state: any) => state.userProfile.playLists);
+  const playList = useSelector((state: any) => state.userProfile?.playLists[parsedUser?.id]) ?? [] ;
   const renderPlayListCard = useCallback(({ item }: any) => <PlayListCard playList={item} />, []);
   const dispatch = useDispatch()
 
@@ -30,8 +31,10 @@ export default function ListOfPlayList({header,fectUserDetails}:any) {
     setLoading(true);
     try {
       const data = await getUserPlayLists(parsedUser?.id);
-      console.log('playlllllistttt',data)
-      dispatch(setPlayLists(data))
+      dispatch(setPlayLists({
+        userId:parsedUser.id,
+        playlists:data
+      }))
     } catch (error:any) {
       // alert(`Something went wrong while fetching user profile : ${error}`)
       // console.log("Something went wrong while fetching user profile", error)
@@ -42,6 +45,10 @@ export default function ListOfPlayList({header,fectUserDetails}:any) {
 
   const handleRefresh = async () => {
     setIsPageRefreshing(true)
+    dispatch(setPlayLists({
+      userId: parsedUser.id,
+      playLists: []
+    }));
     await getUserPlaylist()
     await fectUserDetails()
     setIsPageRefreshing(false)
@@ -52,13 +59,13 @@ export default function ListOfPlayList({header,fectUserDetails}:any) {
       if (parsedUser) await getUserPlaylist();
     };
     fetchData()
-  }, []);
+  }, [parsedUser?.id,dispatch]);
 
-  if(playList.length === 0){
+  if(playList?.length === 0){
     return (
       <>
       {header()}
-      <View style={{flex:1,justifyContent:"center",alignItems:"center"}}>
+      <View style={{flex:1,justifyContent:"center",alignItems:"center",marginTop:-55}}>
       <AntDesign name="frowno" size={30} color="white" />
         <Text style={{color:"#fff",fontSize:16}}>No PlayList Found</Text>
       </View>
@@ -91,8 +98,6 @@ export default function ListOfPlayList({header,fectUserDetails}:any) {
 const styles = StyleSheet.create({
   container: {
     // flex: 1,
-    // backgroundColor: '#1e1e1e',
-    // padding: 10,
   },
   
 })

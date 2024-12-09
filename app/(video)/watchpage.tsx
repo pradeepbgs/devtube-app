@@ -33,7 +33,7 @@ export default function Watchpage() {
   const [isCommentOpened, setIsCommentOpened] = useState<boolean>(false)
   const videoData = videoDeatails ? JSON.parse(videoDeatails) : null;
   const createdAgo = timeAgo(videoData?.createdAt);
-  const localUser = useSelector((state:any) => state.auth.user.user)
+  const localUser = useSelector((state:any) => state.auth.user?.user)
   const router = useRouter();
   const bounceAnim = useRef(new Animated.Value(1)).current;
   const slideAnim = useRef(new Animated.Value(0)).current;
@@ -156,7 +156,7 @@ export default function Watchpage() {
   const handlePress = (user: any) => {
     router.push({
       pathname: '/(profile)',
-      params: { user: JSON.stringify(user) },
+      params: { userDetails: JSON.stringify(user) },
     });
   };
 
@@ -261,7 +261,7 @@ export default function Watchpage() {
           </TouchableOpacity>
         </View>
         <PlayListPopUp 
-        userId={localUser.id}
+        userId={localUser?.id}
         videoId={video?.id}
         visible={playlistPopupVisible}
         onClose={() => setPlaylistPopupVisible(false)}

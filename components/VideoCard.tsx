@@ -1,12 +1,15 @@
 import { formatDuration, timeAgo } from '@/utils/timeAgo';
+import Entypo from '@expo/vector-icons/Entypo';
 import { Link, useRouter } from 'expo-router';
-import React from 'react';
+import React, { useState } from 'react';
 import { View, Text, Image, StyleSheet, TouchableOpacity, Dimensions } from 'react-native';
+import { Menu } from 'react-native-paper';
 
 const { width } = Dimensions.get('window');
 
 
 const VideoCard = ({ video, onPress }: any) => {
+  const [menuVisible, setMenuVisible] = useState<boolean>(false);
   const formattedDuration = formatDuration(video?.duration);
   const timeDifference = timeAgo(video?.createdAt);
  
@@ -28,8 +31,11 @@ const VideoCard = ({ video, onPress }: any) => {
   };
 
   return (
-    <TouchableOpacity style={styles.card} onPress={() => handlePress(video)} activeOpacity={0.98}>
-      <View>
+    <TouchableOpacity style={styles.card}>
+      <TouchableOpacity
+      activeOpacity={0.98}
+      onPress={() => handlePress(video)}
+      >
       {/* <Link
      href={`/(video)/watchpage?videoId=${video._id}`}
       > */}
@@ -39,7 +45,7 @@ const VideoCard = ({ video, onPress }: any) => {
           />      
         {/* </Link> */}
         <Text style={styles.videoDuration}>{formattedDuration}</Text>
-      </View>
+      </TouchableOpacity>
       <View style={styles.infoContainer}>
         <TouchableOpacity onPress={() => handleUserPress(video?.owner)} activeOpacity={0.9}>
         <Image source={{ uri: video?.owner?.avatar }} style={styles.avatar} />
@@ -50,6 +56,23 @@ const VideoCard = ({ video, onPress }: any) => {
           </Text>
           <Text style={styles.username}>{video?.owner?.username || "testUser"} • {video?.views} views • {timeDifference}</Text>
         </View>
+        <Menu
+            visible={menuVisible}
+            onDismiss={() =>setMenuVisible(false)}
+            anchor={
+              <TouchableOpacity>
+                <Entypo name="dots-three-vertical" size={15} color="grey" />
+              </TouchableOpacity>
+            }
+          >
+               <Menu.Item leadingIcon="redo" onPress={() => {}} title="Redo" />
+          </Menu>
+
+        {/* {(
+        <TouchableOpacity style={styles.removeIcon}>
+          <Entypo name="dots-three-vertical" size={15} color="grey" />         
+         </TouchableOpacity>
+      )} */}
       </View>
     </TouchableOpacity>
   );
@@ -110,7 +133,11 @@ const styles = StyleSheet.create({
     borderRadius: 5,
     fontSize: 12,
     fontWeight: 'bold',
-  }
+  },
+  removeIcon: {
+    marginTop: 10,
+    paddingRight: 20,
+  },
 });
 
 export default VideoCard;

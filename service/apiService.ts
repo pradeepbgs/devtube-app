@@ -54,6 +54,18 @@ export const getUserPlayLists = async (userId: number) => {
   return response?.data?.data || [];
 }
 
+export const createUserPlayLists = async (playlistName: string, accessToken:string) => {
+  const response = await axios.post(`${API_URI}/api/v1/playlist/create/`,
+    {
+      playlistName:playlistName
+    },
+    {
+      headers: { Authorization: `Bearer ${accessToken}` },
+      withCredentials: true
+    });
+  return response?.data || [];
+}
+
 export const getPlayListVideos = async (playListId: string) => {
 
   const response = await axios.get(`${API_URI}/api/v1/playlist/${playListId}/`,

@@ -38,7 +38,7 @@ export default function VideoListingCard({ video, showRemoveOption, onRemove }:
         <Text style={styles.meta}> {video?.username} • {video?.views} views • {createdAgo} </Text>
       </View>
 
-      {(
+      {showRemoveOption && (
         <TouchableOpacity onPress={handlePopupRemoveVideo} style={styles.removeIcon}>
           <Entypo name="dots-three-horizontal" size={15} color="grey" />         
          </TouchableOpacity>
@@ -94,6 +94,6 @@ const styles = StyleSheet.create({
   },
   removeIcon: {
     marginTop: 10,
-    paddingRight: 20,
+    paddingRight: 10,
   },
 });

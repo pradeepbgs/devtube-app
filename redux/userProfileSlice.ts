@@ -6,8 +6,8 @@ const userProfilSlice = createSlice({
     initialState: {
         user: null,
         userVideos: [],
-        playLists:[],
-        playListVideos: [],
+        playLists:{},
+        playListVideos: {},
         nextUserVideoLoading: false,
         loading: false,
         activeTab: "videos",
@@ -33,10 +33,12 @@ const userProfilSlice = createSlice({
             state.userDetails = action.payload;
         },
         setPlayLists: (state, action: PayloadAction<any>) => {
-            state.playLists = action.payload;
+            const { userId, playlists } = action.payload;
+            state.playLists[userId] = playlists;
         },
         setPlayListVideos: (state, action: PayloadAction<any>) => {
-            state.playListVideos = action.payload;
+            const { userId, videos } = action.payload;
+            state.playListVideos[userId] = videos
         },
     }
 })

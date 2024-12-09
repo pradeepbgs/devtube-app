@@ -52,7 +52,7 @@ export default function Login({ navigation }: any) {
       dispatch(login({ isLoggedIn: true, user: user }));
       router.push('/(home)');
     } catch (error: any) {
-      setError(error?.response?.data?.message || 'An error occurred during login.');
+      setError(JSON.stringify(error?.response?.data) || 'An error occurred during login.');
       // alert(`Login error: ${error?.response?.data?.message || 'Please try again later.'}`);
     } finally {
       setLoading(false);
@@ -116,6 +116,7 @@ export default function Login({ navigation }: any) {
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
+      {error && <Text style={styles.errorText}>{error}</Text>}
       <Text style={styles.title}>{isRegistering ? 'Register' : 'Login'}</Text>
       {isRegistering && (
         <>
@@ -257,6 +258,12 @@ const styles = StyleSheet.create({
   },
   loadingText: {
     color: 'white',
+    textAlign: 'center',
+    fontSize: 16,
+    marginTop: 10,
+  },
+  errorText: {
+    color: 'red',
     textAlign: 'center',
     fontSize: 16,
     marginTop: 10,

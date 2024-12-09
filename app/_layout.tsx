@@ -32,13 +32,17 @@ function AppInitializer() {
       const accessToken :string | null = await SecureStore.getItemAsync("accessToken");
       const refreshToken:string | null = await SecureStore.getItemAsync("refreshToken");
       const isTokenExpire:boolean = await isTokenExpired(accessToken as string);
-  
+      console.log('refresh token', refreshToken)
       if(isTokenExpire){
         const res = await axios.post(`${API_URI}/api/v1/user/refresh-token/`, {}, {
-          headers: { Authorization: `Bearer ${refreshToken}` },
+          headers: { 
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${refreshToken}` 
+          },
           withCredentials: true,
         });
-        
+        console.log(res.data)
+        console.log('this is res dtat adtaaaaa',res.data?.data)
         if (res.data?.data) {
           const { accessToken: newAccessToken, refreshToken: newRefreshToken } = res.data.data;
         
@@ -51,7 +55,10 @@ function AppInitializer() {
         dispatch(login({ isLoggedIn: true, user: JSON.parse(user) }));
       }
     } catch (error) {
-      console.error("Error initializing user:", error);
+      // console.error("Error initializing user:", error);
+      // await SecureStore.deleteItemAsync("accessToken");
+      // await SecureStore.deleteItemAsync("refreshToken");
+      // dispatch(login({ isLoggedIn: false, user: null }));
     } finally {
       setAppIsReady(true);
     }

@@ -8,7 +8,7 @@ import {
   FlatList,
 } from "react-native";
 import React, { useCallback, useEffect, useState } from "react";
-import { router, useLocalSearchParams } from "expo-router";
+import { router, useLocalSearchParams, useRouter } from "expo-router";
 import { useDispatch, useSelector } from "react-redux";
 import { setUser, setUserVideos } from "@/redux/userProfileSlice";
 import { LoadingSpinner } from "@/components/loadSpinner";
@@ -50,6 +50,7 @@ export default function Index() {
   const { user } = useSelector((state: any) => state.userProfile)
   const { userVideos } = useSelector((state: any) => state.userProfile)
 
+  const router = useRouter()
   const dispatch = useDispatch()
   const renderVideoCard = useCallback(({ item }: any) => <VideoListingCard video={item} />, []);
 
@@ -169,23 +170,41 @@ export default function Index() {
     <Animated.ScrollView
       style={[styles.container]}>
       {/* Cover Image */}
-      <View>
+      <TouchableOpacity
+      onPress={() =>{
+        if(user?.coverImage) router.push({
+          pathname: '/(profile)/ImageShowScreen',
+          params: {
+            imageUrl: user?.coverImage
+          }
+        })
+      }}
+      >
         <Image
           source={{
             uri: user?.coverImage || "https://via.placeholder.com/800x200",
           }}
           style={styles.coverImage}
         />
-      </View>
+      </TouchableOpacity>
 
       {/* Profile Section */}
       <View style={styles.profileContainer}>
-        <View>
+        <TouchableOpacity
+        onPress={() =>{
+          if(user?.avatar) router.push({
+            pathname: '/(profile)/ImageShowScreen',
+            params: {
+              imageUrl: user?.avatar
+            }
+          })
+        }}
+        >
           <Image
             source={{ uri: user?.avatar || "https://via.placeholder.com/100" }}
             style={styles.profileImage}
           />
-        </View>
+        </TouchableOpacity>
         <View style={styles.statsMainConatainer}>
           <View style={styles.statsContainer}>
             <View style={styles.stat}>
@@ -197,8 +216,6 @@ export default function Index() {
                   @{user?.username || "No username"}
                 </Text>
               </View>
-              <Text style={styles.statCount}>{user?.subscribers || "0"}</Text>
-              <Text style={styles.statLabel}>Subscribers</Text>
             </View>
             {/* <View style={styles.stat}>
               <Text style={styles.statCount}>{user?.posts || "0"}</Text>
@@ -222,6 +239,11 @@ export default function Index() {
             </View>
           </View>
         </View>
+      </View>
+      
+      <View style={styles.subscriberContainer}>
+      <Text style={styles.statCount}>{user?.subscribers || "0"}</Text>
+      <Text style={styles.statLabel}>Subscribers</Text>
       </View>
 
       {/* Joined Date */}
@@ -276,31 +298,26 @@ export default function Index() {
         title='Are you sure you want to logout?'
         nextBtn='Logout'
       />
+      {
+        activeTab === 'Home' && userVideos?.length === 0 && (
+          <View style={{ flex: 1, justifyContent: "center", alignItems: "center" , marginTop:10 }}>
+          <AntDesign name="frowno" size={30} color="white" />
+          <Text style={{ color: "#fff", fontSize: 16 }}>No Videos Found</Text>
+        </View>
+        )
+      }
     </Animated.ScrollView>
   )
 
 
-  if (activeTab === 'Home' && userVideos?.length === 0) {
-    return (
-      <>
-        {renderProfileHeader()}
-        {
-          loading && LoadingSpinner()
-        }
-        <View style={{ flex: 1, justifyContent: "center", alignItems: "center", backgroundColor: 'black' }}>
-          <AntDesign name="frowno" size={30} color="white" />
-          <Text style={{ color: "#fff", fontSize: 16 }}>No Videos Found</Text>
-        </View>
-      </>
-    )
-  }
 
   return (
     <View
       style={styles.homeVideos}>
 
       {
-        activeTab === 'Home' && (
+        activeTab === 'Home' && 
+        (
           <AnimatedFlatList
             style={styles.container}
             data={userVideos}
@@ -332,21 +349,24 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "black",
+    width:width
   },
   coverImage: {
     width: width,
-    height: 190,
+    height: 180,
     resizeMode: "cover",
   },
   profileContainer: {
     flex: 1,
     flexDirection: "row",
     marginTop: -25,
-    // padding:5
+    width:'100%',
+    // justifyContent: "space-evenly",
+    // paddingHorizontal:10,
   },
   profileImage: {
-    width: 90,
-    height: 90,
+    width: 80,
+    height: 80,
     borderRadius: 50,
     borderWidth: 2,
     borderColor: "white",
@@ -373,22 +393,11 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: "#333",
     borderBottomColor: "#333",
+    paddingRight:15
   },
   stat: {
     alignItems: "center",
     flexDirection: "row",
-  },
-  statCount: {
-    color: "white",
-    fontSize: 18,
-    fontWeight: "bold",
-    marginRight: 10,
-    marginLeft: 10,
-  },
-  statLabel: {
-    color: "gray",
-    fontSize: 14,
-    marginRight: 15,
   },
   actionsContainer: {
     flexDirection: "row",
@@ -426,7 +435,7 @@ const styles = StyleSheet.create({
     marginTop: 20,
     borderBottomWidth: 1,
     borderBottomColor: "#333",
-    marginBottom: 5
+    marginBottom: 10
   },
   tabText: {
     color: "#686D76",
@@ -440,7 +449,7 @@ const styles = StyleSheet.create({
     borderBottomColor: "#333",
   },
   activeTabText: {
-    color: "white",
+    color: "green",
     padding: 10,
     fontSize: 16,
     borderRadius: 10,
@@ -448,7 +457,7 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     paddingHorizontal: 20,
     borderBottomWidth: 1,
-    borderBottomColor: "white",
+    borderBottomColor: "green",
   },
   homeVideos: {
     flex: 1,
@@ -482,7 +491,7 @@ const styles = StyleSheet.create({
   joinedContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: 10,
+    // marginTop: 10,
     // marginLeft: 5,
     padding: 2,
   },
@@ -493,6 +502,23 @@ const styles = StyleSheet.create({
     color: '#adb5bd',
     fontSize: 14,
     // fontWeight: 'bold',
+  },
+  subscriberContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 1,
+  },
+  statCount: {
+    color: "white",
+    fontSize: 16,
+    fontWeight: "bold",
+    marginRight: 10,
+    // marginLeft: 10,
+  },
+  statLabel: {
+    color: "#adb5bd",
+    fontSize: 14,
+    marginRight: 15,
   },
 
 });

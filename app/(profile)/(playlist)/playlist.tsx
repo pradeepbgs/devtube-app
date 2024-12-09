@@ -20,14 +20,18 @@ export default function Playlist() {
   const parsedPlayList = playListInfo ? JSON.parse(playListInfo) : null;
   const {user} = useSelector((state: any) => state.auth.user);
   const dispatch = useDispatch();
-  const playListVideos = useSelector((state: any) => state.userProfile.playListVideos);
-  
+  const playListVideos = useSelector((state: any) => state.userProfile.playListVideos[parsedPlayList?.owner?.id]) ?? [];
+
+
   const getPlayListvideos = async () => {
     try {
       if (!parsedPlayList) return;
       const res = await getPlayListVideos(parsedPlayList?.id);
       if (res) {
-        dispatch(setPlayListVideos(res));
+        dispatch(setPlayListVideos({
+          userId:parsedPlayList?.owner?.id,
+          videos:res
+        }));
       }
     } catch (error: any) {
       // alert(`Error while fetching playlist details: ${error.message}`);

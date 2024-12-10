@@ -19,7 +19,7 @@ export default function HomeLayout() {
 
   const handlePress = () => {
     router.push({
-      pathname:'/(profile)',
+      pathname: '/(profile)',
       params: {
         userDetails: JSON.stringify(user?.user),
       },
@@ -86,19 +86,7 @@ export default function HomeLayout() {
         />
 
         {/* Search */}
-        <Tabs.Screen
-          name="Search"
-          options={{
-            title: "Search",
-            tabBarIcon: ({ color, focused }) => (
-              <Ionicons
-                name={focused ? "search" : "search-outline"}
-                size={24}
-                color={color}
-              />
-            ),
-          }}
-        />
+
 
         {/* Upload Video */}
         <Tabs.Screen
@@ -107,6 +95,22 @@ export default function HomeLayout() {
             title: "Upload",
             tabBarIcon: ({ color, focused }) => (
               <Ionicons name="add-circle" size={30} color={color} />
+            ),
+          }}
+        />
+
+        {/* Search */}
+
+        <Tabs.Screen
+          name="search"
+          options={{
+            title: "Search",
+            tabBarIcon: ({ color, focused }) => (
+              <Ionicons
+                name={focused ? "search" : "search-outline"}
+                size={24}
+                color={color}
+              />
             ),
           }}
         />
@@ -123,7 +127,7 @@ export default function HomeLayout() {
                     styles.avatarWrapper,
                     focused && styles.avatarFocused,
                   ]}
-                  // onPress={() => handlePress}
+                // onPress={() => handlePress}
                 >
                   <Image
                     source={{ uri: userAvatar }}
@@ -135,7 +139,7 @@ export default function HomeLayout() {
                   name="person"
                   size={24}
                   color={color}
-                  // onPress={() => handlePress}
+                // onPress={() => handlePress}
                 />
               )
             ),

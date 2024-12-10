@@ -34,15 +34,14 @@ function AppInitializer() {
       const isTokenExpire:boolean = await isTokenExpired(accessToken as string);
       console.log('refresh token', refreshToken)
       if(isTokenExpire){
-        const res = await axios.post(`${API_URI}/api/v1/user/refresh-token/`, {}, {
+        const res = await axios.get(`${API_URI}/api/v1/user/refresh-token/`, {
           headers: { 
             'Content-Type': 'application/json',
             Authorization: `Bearer ${refreshToken}` 
           },
           withCredentials: true,
         });
-        console.log(res.data)
-        console.log('this is res dtat adtaaaaa',res.data?.data)
+        
         if (res.data?.data) {
           const { accessToken: newAccessToken, refreshToken: newRefreshToken } = res.data.data;
         

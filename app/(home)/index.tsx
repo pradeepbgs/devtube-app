@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
-import { StyleSheet, View, FlatList, Text, TouchableOpacity, ScrollView , ActivityIndicator, Animated} from "react-native";
+import { StyleSheet, View, FlatList, Text, TouchableOpacity, ScrollView , ActivityIndicator, Animated, ToastAndroid} from "react-native";
 import VideoCard from "@/components/VideoCard";
 import axios from "axios";
 import { API_URI } from "@/utils/api";
@@ -26,7 +26,6 @@ export default function Index() {
 
     try {
       let query = selectedCategory ?? "";
-      console.log(query)
       const response = await axios.get(`${API_URI}/api/v1/video?page=${page}&query=${query}`, {
         withCredentials: true,
       });
@@ -37,7 +36,10 @@ export default function Index() {
         setVideos((prevVideos):any => [...prevVideos, ...newVideos]);
       }
     } catch (error) {
-      console.log("Error fetching videos:", error);
+      ToastAndroid.show(
+        'error fetching home videos',
+        ToastAndroid.SHORT
+      )
     } finally {
       setLoading(false);
       setNextVideoLoading(false);
@@ -177,16 +179,16 @@ const styles = StyleSheet.create({
   },
   categoryButton: {
     paddingHorizontal:10,
-    paddingVertical: 5,
+    paddingVertical: 3,
   },
   categoryText: {
     color: "white",
     fontSize: 15,
     fontWeight: "bold",
-    backgroundColor: '#555',
-    borderRadius: 20,
+    backgroundColor: '#343a40',
+    // borderRadius: 20,
     paddingHorizontal: 5,
-    paddingVertical: 5,
+    paddingVertical: 4,
     // marginRight: 10,
   },
   videocard:{

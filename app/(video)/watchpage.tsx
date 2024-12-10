@@ -1,4 +1,4 @@
-import { ActivityIndicator, Animated, Dimensions, Easing, FlatList, Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import {  Animated, Dimensions, FlatList, Image, StyleSheet, Text, ToastAndroid, TouchableOpacity, View } from 'react-native';
 import React, { useEffect, useRef, useState } from 'react';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import VideoScreen from './player';
@@ -36,14 +36,13 @@ export default function Watchpage() {
   const localUser = useSelector((state:any) => state.auth.user?.user)
   const router = useRouter();
   const bounceAnim = useRef(new Animated.Value(1)).current;
-  const slideAnim = useRef(new Animated.Value(0)).current;
 
   // Fetch video details from API
   const getVideoDetails = async () => {
     setLoading(true)
     if (!videoData?.id) return;
 
-    const accessToken = await SecureStore.getItemAsync("accessToken");
+    const accessToken = await SecureStore.getItemAsync("accessToken") ?? null;
 
     try {
       const response = await axios.get(`${API_URI}/api/v1/video/video-details/${videoData.id}`, {
@@ -52,11 +51,14 @@ export default function Watchpage() {
         },
         withCredentials: true,
       });
-      if (response.data.data) {
+      if (response.data?.data) {
         setVideo(response.data.data);
       }
     } catch (error) {
-      console.error("Error fetching video details:", error);
+      ToastAndroid.show(
+        'something went wrong while getting video details',
+        ToastAndroid.SHORT
+      )
     }
     finally {
       setLoading(false)
@@ -96,6 +98,10 @@ export default function Watchpage() {
         }));
       }
     } catch (error: any) {
+      ToastAndroid.show(
+        `Error toggling subscription: ${JSON.stringify(error.response?.data)}`,
+        ToastAndroid.SHORT
+      )
       // alert(`Error toggling subscription: ${JSON.stringify(error.response?.data)}`);
     }
   };
@@ -128,7 +134,10 @@ export default function Watchpage() {
         }));
       }
     } catch (error: any) {
-      console.log(error?.response?.data)
+      ToastAndroid.show(
+        `Error toggling subscription: ${JSON.stringify(error.response?.data)}`,
+        ToastAndroid.SHORT
+      )
       // alert(`Error toggling subscription: ${JSON.stringify(error.response?.data)}`);
     }
   }
@@ -146,7 +155,8 @@ export default function Watchpage() {
         setsuggestionVideos((prevVideos:any) => [...prevVideos, ...newVideos]);
       }
     } catch (error) {
-      console.log("Error fetching videos:", error);
+      ToastAndroid.show(`Error fetching videos: ${error?.message}`,ToastAndroid.SHORT)
+      // console.log("Error fetching videos:", error);
     } finally {
       setLoading(false);
       setsuggestionVideoLoading(false);
@@ -283,7 +293,11 @@ export default function Watchpage() {
   return (
     <>
       <View style={styles.container}>
-       <VideoScreen url={video?.url} />
+        {
+          loading && LoadingSpinner()
+      }
+      <VideoScreen url={video?.url} />
+       
       
       <View style={styles.commentContainer}>
         {

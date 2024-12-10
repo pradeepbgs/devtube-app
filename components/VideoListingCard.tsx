@@ -1,8 +1,12 @@
-import { Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Dimensions, Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import React from 'react';
 import { formatDuration, timeAgo } from '@/utils/timeAgo';
 import { useRouter } from 'expo-router';
 import Entypo from '@expo/vector-icons/Entypo';
+
+
+const { width } = Dimensions.get('window');
+
 export default function VideoListingCard({ video, showRemoveOption, onRemove }:
   { video: any, showRemoveOption?: boolean, onRemove?: (videoId: number) => void }) {
 
@@ -49,20 +53,20 @@ export default function VideoListingCard({ video, showRemoveOption, onRemove }:
 
 const styles = StyleSheet.create({
   container: {
+    width: width,
     flexDirection: 'row',
-    padding: 4,
+    padding: 5,
     marginBottom: 10,
     borderRadius: 8,
     elevation: 3,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
-    shadowRadius: 4,
-    // backgroundColor: '#121212',
+    // shadowRadius: 4,
   },
   thumbnail: {
-    width: 170,
-    height: 100,
+    width: 140,
+    height: 90,
     borderRadius: 6,
     resizeMode: 'cover',
   },
@@ -83,13 +87,13 @@ const styles = StyleSheet.create({
     // justifyContent: 'center',
   },
   title: {
-    fontSize: 15,
+    fontSize: 13,
     fontWeight: 'bold',
     color: '#ced4da',
     marginBottom: 4,
   },
   meta: {
-    fontSize: 14,
+    fontSize: 12,
     color: '#adb5bd',
   },
   removeIcon: {

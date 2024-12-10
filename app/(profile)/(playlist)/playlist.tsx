@@ -1,4 +1,4 @@
-import { Animated, FlatList, StyleSheet, Text, View, Image, ActivityIndicator } from 'react-native';
+import { Animated, FlatList, StyleSheet, Text, View, Image, ActivityIndicator, ToastAndroid } from 'react-native';
 import React, { useEffect, useState } from 'react';
 import { useLocalSearchParams } from 'expo-router';
 import { useDispatch, useSelector } from 'react-redux';
@@ -18,9 +18,11 @@ export default function Playlist() {
   const [removeVideoId, setRemoveVideoId] = useState<number>()
   const { playListInfo }: any = useLocalSearchParams();
   const parsedPlayList = playListInfo ? JSON.parse(playListInfo) : null;
-  const {user} = useSelector((state: any) => state.auth.user);
+  const user = useSelector((state: any) => state.auth?.user?.user);
   const dispatch = useDispatch();
-  const playListVideos = useSelector((state: any) => state.userProfile.playListVideos[parsedPlayList?.owner?.id]) ?? [];
+  
+  const playListVideos = 
+  useSelector((state: any) => state.userProfile.playListVideos[`${parsedPlayList?.owner?.id}-${parsedPlayList?.id}`]) ?? [];
 
 
   const getPlayListvideos = async () => {
@@ -29,12 +31,15 @@ export default function Playlist() {
       const res = await getPlayListVideos(parsedPlayList?.id);
       if (res) {
         dispatch(setPlayListVideos({
-          userId:parsedPlayList?.owner?.id,
+          userId:`${parsedPlayList?.owner?.id}-${parsedPlayList?.id}`,
           videos:res
         }));
       }
     } catch (error: any) {
-      // alert(`Error while fetching playlist details: ${error.message}`);
+      ToastAndroid.show(
+        JSON.stringify(error?.message) || 'Something went wrong',
+        ToastAndroid.SHORT
+      )
     } finally {
       setLoading(false);
     }
@@ -42,6 +47,10 @@ export default function Playlist() {
 
   const handleRefresh = async () => {
     setIsRefreshing(true);
+    dispatch(setPlayListVideos({
+      userId:`${parsedPlayList?.owner?.id}-${parsedPlayList?.id}`,
+      videos:[]
+    }));
     await getPlayListvideos();
     setIsRefreshing(false);
   };
@@ -54,10 +63,14 @@ export default function Playlist() {
   const handleRemoveVideo = async () => {
     // const accessToken = await SecureStore.getItemAsync("accessToken");
     try {
-      const result = await removeVideoToPlayList(parsedPlayList?.id, removeVideoId!, user?.accessToken)
+      await removeVideoToPlayList(parsedPlayList?.id, removeVideoId!, user?.accessToken)
       setRemoveVideoPopUp(false)
       await getPlayListvideos()
     } catch (error) {
+      ToastAndroid.show(
+        `something went wrong while removing video from playlist: ${error}`,
+        ToastAndroid.SHORT
+      )
       // alert(`something went wrong while removing video from playlist: ${error}`)
     }
   }

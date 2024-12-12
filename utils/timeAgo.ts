@@ -33,3 +33,19 @@ export const formatDuration = (duration: number) => {
       return `${seconds} second${seconds > 1 ? 's' : ''} ago`;
     }
   }
+
+  export const whenCreated = (dateString: any) => {
+    const createdAt = new Date(dateString);
+  
+    const year = createdAt.getFullYear();
+    const day = createdAt.getDate();
+  
+    const monthNames = [
+      "January", "February", "March", "April", "May", "June",
+      "July", "August", "September", "October", "November", "December"
+    ];
+    const monthName = monthNames[createdAt.getMonth()];
+  
+    return `${monthName} ${day}, ${year}`;
+  };
+  

@@ -6,9 +6,10 @@ import {
   View,
   TouchableOpacity,
   FlatList,
+  ToastAndroid,
 } from "react-native";
 import React, { useCallback, useEffect, useState } from "react";
-import { router, useLocalSearchParams, useRouter } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import { useDispatch, useSelector } from "react-redux";
 import { setUser, setUserVideos } from "@/redux/userProfileSlice";
 import { LoadingSpinner } from "@/components/loadSpinner";
@@ -22,6 +23,7 @@ import * as SecureStore from 'expo-secure-store'
 import { logout } from "@/redux/authSlice";
 import { PopUp } from "@/components/LogoutPopup";
 import Fontisto from '@expo/vector-icons/Fontisto';
+import EvilIcons from '@expo/vector-icons/EvilIcons';
 
 interface userT {
   avatar?: string,
@@ -29,10 +31,11 @@ interface userT {
   email?: string,
   id: number,
   username: string,
-  fullName?: string,
+  fullname?: string,
   createdAt: string,
   subscribers: number,
-  is_subscribed: boolean
+  isSubscribed: boolean,
+  location?:string,
 }
 
 const { width } = Dimensions.get("window");
@@ -45,9 +48,9 @@ export default function Index() {
   const [logoutPopupVisible, setLogoutPopupVisible] = useState<boolean>(false);
   const [activeTab, setActiveTab] = useState<string>("Home");
   const { userDetails }: any = useLocalSearchParams();
-  const localUser: userT = useSelector((state: any) => state.auth?.user?.user);
+  const localUser = useSelector((state: any) => state.auth?.user?.user);
   const parsedUser: userT = userDetails ? JSON.parse(userDetails) : {};
-  const { user } = useSelector((state: any) => state.userProfile)
+  const { user }:{user:userT} = useSelector((state: any) => state.userProfile)
   const { userVideos } = useSelector((state: any) => state.userProfile)
 
   const router = useRouter()
@@ -68,7 +71,7 @@ export default function Index() {
       }
     } catch (error) {
       // alert("Something went wrong while fetching user profile")
-      console.log("Something went wrong while fetching user profile", error)
+      ToastAndroid.show("Something went wrong while fetching user profile", ToastAndroid.SHORT)
     } finally {
       setLoading(false);
     }
@@ -84,7 +87,7 @@ export default function Index() {
       dispatch(setUserVideos(newVideos))
     } catch (error) {
       // alert("Something went wrong while fetching user videos")
-      console.log("Something went wrong while fetching user videos", error)
+      ToastAndroid.show("Something went wrong while fetching user videos", ToastAndroid.SHORT)
     } finally {
       setNextUserVideoLoading(false);
       setLoading(false);
@@ -101,7 +104,7 @@ export default function Index() {
       await SecureStore.deleteItemAsync("refreshToken");
       router.push('/')
     } catch (error) {
-      // alert(`something went wrong while logging out user: ${error}`)
+      ToastAndroid.show(`something went wrong while logging out user: ${error}`,ToastAndroid.SHORT)
     } finally {
       setLogoutPopupVisible(false)
     }
@@ -127,7 +130,7 @@ export default function Index() {
         }))
       }
     } catch (error) {
-      // alert(`something went wrong while subscribing: ${error}`)
+      ToastAndroid.show(`something went wrong while subscribing: ${error}`,ToastAndroid.SHORT)
     }
   }
 
@@ -141,9 +144,7 @@ export default function Index() {
     fetchData().finally(() => setLoading(false));
   }, []);
 
-  if (loading) {
-    return LoadingSpinner("small", "#fff")
-  }
+  if (loading) return LoadingSpinner();
 
   const handleRefresh = async () => {
     setIsPageRefreshing(true)
@@ -233,7 +234,7 @@ export default function Index() {
                   }
                   }
                   style={styles.actionButton}>
-                  <Text style={styles.actionButtonText}>{user?.is_subscribed ? 'Subscribed' : 'Subscribe'}</Text>
+                  <Text style={styles.actionButtonText}>{user?.isSubscribed ? 'Subscribed' : 'Subscribe'}</Text>
                 </TouchableOpacity>
               )}
             </View>
@@ -243,18 +244,33 @@ export default function Index() {
       
       <View style={styles.subscriberContainer}>
       <Text style={styles.statCount}>{user?.subscribers || "0"}</Text>
-      <Text style={styles.statLabel}>Subscribers</Text>
+      <Text style={styles.bioText}>Subscribers</Text>
       </View>
+              
+      <View
+      style={styles.joinedContainer}
+      >
+      <EvilIcons 
+      name="location" 
+      size={16} 
+      color="#adb5bd" 
+      />
+      <Text style={styles.bioText}>
+        {
+          parsedUser?.location ?? 'Milky Way'
+        }
+      </Text>
+      </View>        
 
       {/* Joined Date */}
       <View style={styles.joinedContainer}>
         <Fontisto
           name="date"
           size={12}
-          color="green"
+          color="#adb5bd"
           style={styles.dateIcon}
         />
-        <Text style={styles.joinedAgo}>
+        <Text style={styles.bioText}>
           {`Joined ${monthCreated} ${yearCreated}.`}
         </Text>
       </View>
@@ -353,7 +369,7 @@ const styles = StyleSheet.create({
   },
   coverImage: {
     width: width,
-    height: 180,
+    height: 160,
     resizeMode: "cover",
   },
   profileContainer: {
@@ -367,9 +383,10 @@ const styles = StyleSheet.create({
   profileImage: {
     width: 80,
     height: 80,
-    borderRadius: 50,
+    borderRadius: 5,
     borderWidth: 2,
     borderColor: "white",
+    resizeMode: 'cover',
   },
   userName: {
     color: "#7BD3EA",
@@ -432,10 +449,10 @@ const styles = StyleSheet.create({
   tabContent: {
     flex: 1,
     flexDirection: "row",
-    marginTop: 20,
     borderBottomWidth: 1,
     borderBottomColor: "#333",
-    marginBottom: 10
+    marginTop: 10,
+    paddingBottom:5
   },
   tabText: {
     color: "#686D76",
@@ -498,19 +515,21 @@ const styles = StyleSheet.create({
   dateIcon: {
     marginRight: 8,
   },
-  joinedAgo: {
+  bioText: {
     color: '#adb5bd',
     fontSize: 14,
-    // fontWeight: 'bold',
+    fontWeight: 'heavy',
+    marginLeft:3
   },
   subscriberContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     padding: 1,
+    marginTop:4
   },
   statCount: {
-    color: "white",
-    fontSize: 16,
+    color: "#adb5bd",
+    fontSize: 14,
     fontWeight: "bold",
     marginRight: 10,
     // marginLeft: 10,

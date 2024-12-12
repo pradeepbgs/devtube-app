@@ -44,7 +44,7 @@ export const PlayListPopUp: React.FC<PlayListPopUpProps> = ({
         if (!playList || playList.length === 0) {
             getUserPlaylist(); 
         }
-    }, [userId]);
+    }, []);
 
     const handleToggle = (name: string) => {
         setSelectedPlayLists((prev) => {

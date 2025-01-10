@@ -3,7 +3,7 @@ import { StyleSheet, Text, View, TextInput, TouchableOpacity, FlatList, Alert, P
 import { MaterialIcons } from '@expo/vector-icons'
 
 const PlayListSetting = ({ playlist }: { playlist: any }) => {
-  const [playlistName, setPlaylistName] = useState(playlist.name);
+  const [playlistName, setPlaylistName] = useState(playlist?.name);
   const [isEditing, setIsEditing] = useState(false);
 
   // Handle editing playlist name
@@ -50,13 +50,13 @@ const PlayListSetting = ({ playlist }: { playlist: any }) => {
 
       {/* Playlist Items List */}
       <FlatList
-        data={playlist.videos}
+        data={playlist?.videos}
         keyExtractor={(item) => item.id}
         renderItem={({ item }) => (
           <View style={styles.videoItem}>
-            <Text style={styles.videoTitle}>{item.title}</Text>
+            <Text style={styles.videoTitle}>{item?.title}</Text>
             <TouchableOpacity
-              onPress={() => handleRemoveVideo(item.id)}
+              onPress={() => handleRemoveVideo(item?.id)}
               style={styles.removeButton}
             >
               <MaterialIcons name="delete" size={20} color="white" />

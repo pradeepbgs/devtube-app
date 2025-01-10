@@ -48,23 +48,22 @@ export default function VideoListScreen() {
 
   // Fetch Videos on Page Change
   useEffect(() => {
+    setVideos([])
     fetchVideos()
   }, [page])
 
   // Handle Empty State
-  if (loading) {
-    return (
-      LoadingSpinner()
-    )
-  }
+  if (loading) 
+    return (LoadingSpinner());
+  
 
-  if (!loading && videos.length === 0) {
+  if (!loading && videos.length === 0)
     return (
       <View style={styles.centeredContainer}>
         <Text style={styles.noVideosText}>No videos found</Text>
       </View>
-    )
-  }
+    );
+  
 
   return (
     <View style={styles.container}>

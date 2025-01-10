@@ -7,7 +7,7 @@ import VideoListingCard from '@/components/VideoListingCard';
 import { setPlayListVideos } from '@/redux/userProfileSlice';
 import { LoadingSpinner } from '@/components/loadSpinner';
 import AntDesign from '@expo/vector-icons/AntDesign';
-import { PopUp } from '@/components/LogoutPopup';
+import { PopUp } from '@/components/PopUp';
 import PlayListVideoSettingPopUp from '@/components/PlayListVideoSettingPopUp';
 import PlayListSetting from './PlayListSetting';
 

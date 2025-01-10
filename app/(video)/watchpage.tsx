@@ -24,7 +24,7 @@ import CommentsPage from "../(comments)/comments";
 import { handleBounce } from "@/utils/bounce";
 import { LoadingSpinner } from "@/components/loadSpinner";
 import VideoListingCard from "@/components/VideoListingCard";
-import { PopUp } from "@/components/LogoutPopup";
+import { PopUp } from "@/components/PopUp";
 import { PlayListPopUp } from "@/components/PlayListPopUp";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import DescriptionPage from "./DescriptionPage";
@@ -173,7 +173,6 @@ export default function Watchpage() {
     getSuggestionVideo();
   }, [videoData?.id]);
 
-  console.log(video)
 
   const renderHeader = () => (
     <View style={styles.textContainer}>

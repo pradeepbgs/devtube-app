@@ -1,13 +1,15 @@
-import { Animated, FlatList, StyleSheet, Text, View, Image, ActivityIndicator, ToastAndroid } from 'react-native';
+import { Animated, FlatList, StyleSheet, Text, View, Image, ToastAndroid } from 'react-native';
 import React, { useEffect, useState } from 'react';
-import { useLocalSearchParams } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { useDispatch, useSelector } from 'react-redux';
 import { getPlayListVideos, removeVideoToPlayList } from '@/service/apiService';
 import VideoListingCard from '@/components/VideoListingCard';
 import { setPlayListVideos } from '@/redux/userProfileSlice';
 import { LoadingSpinner } from '@/components/loadSpinner';
 import AntDesign from '@expo/vector-icons/AntDesign';
-import { PopUp } from '@/components/LogoutPopup';
+import { PopUp } from '@/components/PopUp';
+import PlayListVideoSettingPopUp from '@/components/PlayListVideoSettingPopUp';
+import PlayListSetting from './PlayListSetting';
 
 const AnimatedFlatList = Animated.createAnimatedComponent(FlatList);
 
@@ -19,6 +21,7 @@ export default function Playlist() {
   const { playListInfo }: any = useLocalSearchParams();
   const parsedPlayList = playListInfo ? JSON.parse(playListInfo) : null;
   const user = useSelector((state: any) => state.auth?.user?.user);
+
   const dispatch = useDispatch();
   
   const playListVideos = 
@@ -110,15 +113,16 @@ export default function Playlist() {
           size={25}
           style={styles.settingsIcon}
           color="white"
+          onPress={() => {
+            router.push({
+              pathname: '/(profile)/(playlist)/PlayListSetting',
+              params: {
+                playListInfo: JSON.stringify(parsedPlayList)
+              }
+            })
+          }}
         />}
       </View>
-      <PopUp 
-        visible={removeVideoPopUp}
-        onClose={()=>setRemoveVideoPopUp(false)}
-        onHandler={() =>handleRemoveVideo()}
-        title='Are you sure , you want to remove this video from playList'
-        nextBtn='Remove'
-      />
     </View>
   );
 
@@ -139,6 +143,13 @@ export default function Playlist() {
       onRefresh={handleRefresh}
       />
     }
+    <PlayListVideoSettingPopUp
+    visible={removeVideoPopUp}
+    onClose={()=>setRemoveVideoPopUp(false)}
+    onRemove={handleRemoveVideo}
+    videoId={removeVideoId!}
+    />
+
     </View>
   );
 }

@@ -31,7 +31,7 @@ const VideoCard = ({ video, onPress }: any) => {
   };
 
   return (
-    <TouchableOpacity style={styles.card}>
+    <TouchableOpacity style={styles.card} activeOpacity={1}>
       <TouchableOpacity
       activeOpacity={0.98}
       onPress={() => handlePress(video)}

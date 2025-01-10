@@ -4,14 +4,13 @@ import React from 'react';
 import { StyleSheet, Image, View, Text } from 'react-native';
 
 
-
 const ImageShowScreen: React.FC<any> = () => {
 
     const {imageUrl}: { imageUrl: string } = useLocalSearchParams()
 
   return (
     <View style={styles.container}>
-      <Image source={{ uri: imageUrl }} style={styles.image} />
+        <Image source={{ uri: imageUrl }} style={styles.image} />
     </View>
   );
 };

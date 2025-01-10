@@ -14,6 +14,7 @@ interface PopUpProps {
   onHandler: () => void;
   title?: string;
   nextBtn?: string;
+  header?: string;
 }
 
 export const PopUp : React.FC<PopUpProps> = ({ 
@@ -21,7 +22,8 @@ export const PopUp : React.FC<PopUpProps> = ({
   onClose, 
   onHandler ,
   title='',
-  nextBtn=''
+  nextBtn='',
+  header = ''
 }:any) => {
   return (
     <Modal
@@ -32,7 +34,7 @@ export const PopUp : React.FC<PopUpProps> = ({
     >
       <View style={styles.centeredView}>
         <View style={styles.modalView}>
-          <Text style={styles.modalTitle}>Logout</Text>
+          <Text style={styles.modalTitle}>{header}</Text>
           <Text style={styles.modalText}>{title}</Text>
           
           <View style={styles.buttonContainer}>

@@ -4,22 +4,20 @@ import { formatDuration, timeAgo } from '@/utils/timeAgo';
 import { useRouter } from 'expo-router';
 import Entypo from '@expo/vector-icons/Entypo';
 
-
 const { width } = Dimensions.get('window');
 
 export default function VideoListingCard({ video, showRemoveOption, onRemove }:
   { video: any, showRemoveOption?: boolean, onRemove?: (videoId: number) => void }) {
 
-
-  const createdAgo = timeAgo(video?.createdAt ?? video?.created_at)
+  const createdAgo = timeAgo(video?.createdAt ?? video?.created_at);
   const formattedDuration = formatDuration(video?.duration);
-  const router = useRouter()
+  const router = useRouter();
 
   const handlePress = (video: any) => {
     router.push({
       pathname: '/(video)/watchpage',
       params: { videoDeatails: JSON.stringify(video) },
-    })
+    });
   };
 
   const handlePopupRemoveVideo = () => {
@@ -29,23 +27,30 @@ export default function VideoListingCard({ video, showRemoveOption, onRemove }:
   };
 
   return (
-    <TouchableOpacity onPress={() => handlePress(video)} style={styles.container} activeOpacity={0.98}>
+    <TouchableOpacity style={styles.container} activeOpacity={0.98}>
       {/* Thumbnail on the left */}
-      <View>
+      <TouchableOpacity 
+      activeOpacity={1}
+      onPress={() => handlePress(video)}
+      style={styles.thumbnailContainer}>
         <Image source={{ uri: video?.thumbnail }} style={styles.thumbnail} />
         <Text style={styles.videoDuration}>{formattedDuration}</Text>
-      </View>
+      </TouchableOpacity>
 
       {/* Video details on the right */}
-      <View style={styles.details}>
-        <Text style={styles.title} numberOfLines={2}> {video?.title} </Text>
-        <Text style={styles.meta}> {video?.username} • {video?.views} views • {createdAgo} </Text>
-      </View>
+      <TouchableOpacity
+      activeOpacity={1}
+      onPress={() => handlePress(video)}
+      style={styles.details}>
+        <Text style={styles.title} numberOfLines={2}>{video?.title}</Text>
+        <Text style={styles.meta}>{video?.username} • {video?.views} views • {createdAgo}</Text>
+      </TouchableOpacity>
 
+      {/* Three-dot icon for options */}
       {showRemoveOption && (
         <TouchableOpacity onPress={handlePopupRemoveVideo} style={styles.removeIcon}>
-          <Entypo name="dots-three-horizontal" size={15} color="grey" />         
-         </TouchableOpacity>
+          <Entypo name="dots-three-vertical" size={20} color="#adb5bd" />
+        </TouchableOpacity>
       )}
     </TouchableOpacity>
   );
@@ -55,49 +60,55 @@ const styles = StyleSheet.create({
   container: {
     width: width,
     flexDirection: 'row',
-    padding: 5,
+    padding: 10,
+    // marginHorizontal: 10,
     marginBottom: 10,
     borderRadius: 8,
-    elevation: 3,
+    elevation: 2,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    // shadowRadius: 4,
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.2,
+    shadowRadius: 2,
+  },
+  thumbnailContainer: {
+    position: 'relative',
   },
   thumbnail: {
     width: 140,
     height: 90,
-    borderRadius: 6,
+    borderRadius: 8,
     resizeMode: 'cover',
   },
   videoDuration: {
     position: 'absolute',
-    bottom: 2,
-    right: 2,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    bottom: 5,
+    right: 5,
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
     color: 'white',
-    padding: 4,
-    borderRadius: 5,
-    fontSize: 9,
-    fontWeight: 'bold',
+    fontSize: 10,
+    fontWeight: '600',
+    paddingVertical: 2,
+    paddingHorizontal: 4,
+    borderRadius: 3,
   },
   details: {
     flex: 1,
-    marginLeft: 10,
-    // justifyContent: 'center',
+    marginLeft: 12,
   },
   title: {
-    fontSize: 13,
+    fontSize: 14,
     fontWeight: 'bold',
-    color: '#ced4da',
+    color: '#f8f9fa',
     marginBottom: 4,
+    lineHeight: 20,
   },
   meta: {
     fontSize: 12,
     color: '#adb5bd',
   },
   removeIcon: {
-    marginTop: 10,
-    paddingRight: 10,
+    alignSelf: 'flex-start',
+    marginTop: 5,
+    paddingLeft: 10,
   },
 });

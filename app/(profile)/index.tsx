@@ -6,9 +6,10 @@ import {
   View,
   TouchableOpacity,
   FlatList,
+  ToastAndroid,
 } from "react-native";
 import React, { useCallback, useEffect, useState } from "react";
-import { router, useLocalSearchParams, useRouter } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import { useDispatch, useSelector } from "react-redux";
 import { setUser, setUserVideos } from "@/redux/userProfileSlice";
 import { LoadingSpinner } from "@/components/loadSpinner";
@@ -20,8 +21,9 @@ import AntDesign from "@expo/vector-icons/AntDesign";
 import VideoListingCard from "@/components/VideoListingCard";
 import * as SecureStore from 'expo-secure-store'
 import { logout } from "@/redux/authSlice";
-import { PopUp } from "@/components/LogoutPopup";
+import { PopUp } from "@/components/PopUp";
 import Fontisto from '@expo/vector-icons/Fontisto';
+import EvilIcons from '@expo/vector-icons/EvilIcons';
 
 interface userT {
   avatar?: string,
@@ -29,10 +31,11 @@ interface userT {
   email?: string,
   id: number,
   username: string,
-  fullName?: string,
+  fullname?: string,
   createdAt: string,
   subscribers: number,
-  is_subscribed: boolean
+  isSubscribed: boolean,
+  location?:string,
 }
 
 const { width } = Dimensions.get("window");
@@ -45,11 +48,11 @@ export default function Index() {
   const [logoutPopupVisible, setLogoutPopupVisible] = useState<boolean>(false);
   const [activeTab, setActiveTab] = useState<string>("Home");
   const { userDetails }: any = useLocalSearchParams();
-  const localUser: userT = useSelector((state: any) => state.auth?.user?.user);
+  const localUser = useSelector((state: any) => state.auth?.user?.user);
   const parsedUser: userT = userDetails ? JSON.parse(userDetails) : {};
-  const { user } = useSelector((state: any) => state.userProfile)
+  const { user }:{user:userT} = useSelector((state: any) => state.userProfile)
   const { userVideos } = useSelector((state: any) => state.userProfile)
-
+  const isLoggedIn = useSelector((state:any) => state.auth.isLoggedIn)
   const router = useRouter()
   const dispatch = useDispatch()
   const renderVideoCard = useCallback(({ item }: any) => <VideoListingCard video={item} />, []);
@@ -61,14 +64,14 @@ export default function Index() {
 
   const getUserProfile = async () => {
     if (!parsedUser || !parsedUser.id) return;
+    const accessToken = await SecureStore.getItemAsync("accessToken");
     try {
-      const userData = await getUserProfileData(parsedUser.username)
+      const userData = await getUserProfileData(parsedUser.username,accessToken as string)
       if (userData.data) {
         dispatch(setUser(userData.data));
       }
     } catch (error) {
-      // alert("Something went wrong while fetching user profile")
-      console.log("Something went wrong while fetching user profile", error)
+      ToastAndroid.show("Something went wrong while fetching user profile", ToastAndroid.SHORT)
     } finally {
       setLoading(false);
     }
@@ -80,11 +83,9 @@ export default function Index() {
     setNextUserVideoLoading(true);
     try {
       const newVideos = await fetchUserVideosData(userId)
-      // console.log('fetched videos',newVideos)
       dispatch(setUserVideos(newVideos))
     } catch (error) {
-      // alert("Something went wrong while fetching user videos")
-      console.log("Something went wrong while fetching user videos", error)
+      ToastAndroid.show("Something went wrong while fetching user videos", ToastAndroid.SHORT)
     } finally {
       setNextUserVideoLoading(false);
       setLoading(false);
@@ -101,38 +102,40 @@ export default function Index() {
       await SecureStore.deleteItemAsync("refreshToken");
       router.push('/')
     } catch (error) {
-      // alert(`something went wrong while logging out user: ${error}`)
+      ToastAndroid.show(`something went wrong while logging out user: ${error}`,ToastAndroid.SHORT)
     } finally {
       setLogoutPopupVisible(false)
     }
   };
 
   const toggleSubscribe = async () => {
-    if (!parsedUser?.id) return;
+    if(!isLoggedIn || !parsedUser?.id) return ToastAndroid.show("Please login to subscribe",ToastAndroid.SHORT)
+    
     const accessToken = await SecureStore.getItemAsync("accessToken");
+    
     try {
-      const response: any = await subscribe(parsedUser?.id, accessToken as string)
+      const response = await subscribe(parsedUser?.id, accessToken as string)
       if (response?.message === "Subscribed successfully") {
         dispatch(setUser({
           ...user,
-          is_subscribed: true,
+          isSubscribed: true,
           subscribers: user?.subscribers + 1
         }))
       }
       else if (response?.message === "Unsubscribed successfully") {
         dispatch(setUser({
           ...user,
-          is_subscribed: false,
+          isSubscribed: false,
           subscribers: user?.subscribers - 1
         }))
       }
     } catch (error) {
-      // alert(`something went wrong while subscribing: ${error}`)
+      ToastAndroid.show(`something went wrong while subscribing: ${error}`,ToastAndroid.SHORT)
     }
   }
 
   useEffect(() => {
-    // dispatch(setUser(parsedUser))
+    dispatch(setUser(parsedUser))
     const fetchData = async () => {
       await getUserProfile();
       await fetchUserVideos(parsedUser?.id);
@@ -141,16 +144,16 @@ export default function Index() {
     fetchData().finally(() => setLoading(false));
   }, []);
 
-  if (loading) {
-    return LoadingSpinner("small", "#fff")
-  }
+  if (loading) return LoadingSpinner();
 
   const handleRefresh = async () => {
+    dispatch
     setIsPageRefreshing(true)
-    await fetchUserVideos(parsedUser?.id)
     await getUserProfile()
+    await fetchUserVideos(parsedUser?.id)
     setIsPageRefreshing(false)
   };
+
 
   if (!userDetails) {
     return (
@@ -171,6 +174,7 @@ export default function Index() {
       style={[styles.container]}>
       {/* Cover Image */}
       <TouchableOpacity
+      activeOpacity={0.8}
       onPress={() =>{
         if(user?.coverImage) router.push({
           pathname: '/(profile)/ImageShowScreen',
@@ -191,6 +195,7 @@ export default function Index() {
       {/* Profile Section */}
       <View style={styles.profileContainer}>
         <TouchableOpacity
+        activeOpacity={0.8}
         onPress={() =>{
           if(user?.avatar) router.push({
             pathname: '/(profile)/ImageShowScreen',
@@ -233,7 +238,7 @@ export default function Index() {
                   }
                   }
                   style={styles.actionButton}>
-                  <Text style={styles.actionButtonText}>{user?.is_subscribed ? 'Subscribed' : 'Subscribe'}</Text>
+                  <Text style={styles.actionButtonText}>{user?.isSubscribed ? 'Subscribed' : 'Subscribe'}</Text>
                 </TouchableOpacity>
               )}
             </View>
@@ -243,18 +248,33 @@ export default function Index() {
       
       <View style={styles.subscriberContainer}>
       <Text style={styles.statCount}>{user?.subscribers || "0"}</Text>
-      <Text style={styles.statLabel}>Subscribers</Text>
+      <Text style={styles.bioText}>Subscribers</Text>
       </View>
+              
+      <View
+      style={styles.joinedContainer}
+      >
+      <EvilIcons 
+      name="location" 
+      size={16} 
+      color="#adb5bd" 
+      />
+      <Text style={styles.bioText}>
+        {
+          parsedUser?.location ?? 'Milky Way'
+        }
+      </Text>
+      </View>        
 
       {/* Joined Date */}
       <View style={styles.joinedContainer}>
         <Fontisto
           name="date"
           size={12}
-          color="green"
+          color="#adb5bd"
           style={styles.dateIcon}
         />
-        <Text style={styles.joinedAgo}>
+        <Text style={styles.bioText}>
           {`Joined ${monthCreated} ${yearCreated}.`}
         </Text>
       </View>
@@ -353,7 +373,7 @@ const styles = StyleSheet.create({
   },
   coverImage: {
     width: width,
-    height: 180,
+    height: 160,
     resizeMode: "cover",
   },
   profileContainer: {
@@ -367,9 +387,10 @@ const styles = StyleSheet.create({
   profileImage: {
     width: 80,
     height: 80,
-    borderRadius: 50,
+    borderRadius: 5,
     borderWidth: 2,
     borderColor: "white",
+    resizeMode: 'cover',
   },
   userName: {
     color: "#7BD3EA",
@@ -432,10 +453,8 @@ const styles = StyleSheet.create({
   tabContent: {
     flex: 1,
     flexDirection: "row",
-    marginTop: 20,
-    borderBottomWidth: 1,
-    borderBottomColor: "#333",
-    marginBottom: 10
+    marginTop: 10,
+    paddingBottom:5
   },
   tabText: {
     color: "#686D76",
@@ -498,19 +517,21 @@ const styles = StyleSheet.create({
   dateIcon: {
     marginRight: 8,
   },
-  joinedAgo: {
+  bioText: {
     color: '#adb5bd',
     fontSize: 14,
-    // fontWeight: 'bold',
+    fontWeight: 'heavy',
+    marginLeft:3
   },
   subscriberContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     padding: 1,
+    marginTop:4
   },
   statCount: {
-    color: "white",
-    fontSize: 16,
+    color: "#adb5bd",
+    fontSize: 14,
     fontWeight: "bold",
     marginRight: 10,
     // marginLeft: 10,

@@ -1,5 +1,5 @@
 import { Stack } from "expo-router";
-import { StyleSheet, View, StatusBar, Text } from "react-native";
+import { StyleSheet, View, StatusBar, Text, SafeAreaView } from "react-native";
 import { Provider, useDispatch } from "react-redux";
 import store from "@/redux/store";
 import * as SecureStore from 'expo-secure-store';
@@ -32,7 +32,6 @@ function AppInitializer() {
       const accessToken :string | null = await SecureStore.getItemAsync("accessToken");
       const refreshToken:string | null = await SecureStore.getItemAsync("refreshToken");
       const isTokenExpire:boolean = await isTokenExpired(accessToken as string);
-      console.log('refresh token', refreshToken)
       if(isTokenExpire){
         const res = await axios.get(`${API_URI}/api/v1/user/refresh-token/`, {
           headers: { 
@@ -74,8 +73,10 @@ function AppInitializer() {
 
 
   return (
-    <View style={styles.container}>
-      <StatusBar barStyle="default" backgroundColor="black" />
+    <SafeAreaView style={styles.container}>
+      <StatusBar barStyle="default" 
+      backgroundColor="black" 
+      />
       <Stack
         screenOptions={{
           headerStyle: { backgroundColor: "black" },
@@ -97,7 +98,7 @@ function AppInitializer() {
         />
         <Stack.Screen name="(video)" options={{ headerShown: false }} />
       </Stack>
-    </View>
+    </SafeAreaView>
   );
 }
 

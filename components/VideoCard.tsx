@@ -1,6 +1,6 @@
 import { formatDuration, timeAgo } from '@/utils/timeAgo';
 import Entypo from '@expo/vector-icons/Entypo';
-import { Link, useRouter } from 'expo-router';
+import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import { View, Text, Image, StyleSheet, TouchableOpacity, Dimensions } from 'react-native';
 import { Menu } from 'react-native-paper';

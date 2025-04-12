@@ -16,7 +16,7 @@ import VideoScreen from "./player";
 import { timeAgo, whenCreated } from "@/utils/timeAgo";
 import axios from "axios";
 import { useSelector } from "react-redux";
-import { API_URI } from "@/utils/api";
+import { API_URI, VIDEO_API_URI } from "@/utils/api";
 import * as SecureStore from "expo-secure-store";
 import AntDesign from "@expo/vector-icons/AntDesign";
 import EvilIcons from "@expo/vector-icons/EvilIcons";
@@ -28,12 +28,13 @@ import { PopUp } from "@/components/PopUp";
 import { PlayListPopUp } from "@/components/PlayListPopUp";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import DescriptionPage from "./DescriptionPage";
+import { VideoDetailsT } from "@/types";
 
 const { width } = Dimensions.get("window");
 
 export default function Watchpage() {
   const [loading, setLoading] = useState<boolean>(true);
-  const [video, setVideo] = useState<any>(null);
+  const [video, setVideo] = useState<VideoDetailsT>();
   const [suggestionVideos, setsuggestionVideos] = useState<any>(null);
   const [page, setPage] = useState<number>(1);
   const [suggestionVideoLoading, setsuggestionVideoLoading] = useState<boolean>(false);
@@ -53,12 +54,11 @@ export default function Watchpage() {
   // Fetch video details from API
   const getVideoDetails = async () => {
     setLoading(true);
-    if (!videoData?.id) return;
+    if (!videoData?._id) return;
 
     const accessToken = (await SecureStore.getItemAsync("accessToken"));
-
     try {
-      const response = await axios.get(`${API_URI}/api/v1/video/video-details/${videoData.id}`, {
+      const response = await axios.get(`${VIDEO_API_URI}/${videoData._id}`, {
         headers: {
           ...(accessToken && { Authorization: `Bearer ${accessToken}` }),
         },
@@ -67,8 +67,8 @@ export default function Watchpage() {
       if (response.data?.data) {
         setVideo(response.data.data);
       }
-    } catch (error) {
-      ToastAndroid.show("something went wrong while getting video details", ToastAndroid.SHORT);
+    } catch (error: any) {
+      ToastAndroid.show(`something went wrong while getting video details: ${error?.message}`, ToastAndroid.SHORT);
     } finally {
       setLoading(false);
     }
@@ -113,7 +113,7 @@ export default function Watchpage() {
       setLogoutPopupVisible(true);
       return;
     }
-    if (!video?.id) return;
+    if (!video?._id) return;
     handleBounce(bounceAnim);
     const accessToken = await SecureStore.getItemAsync("accessToken");
     try {
@@ -152,7 +152,7 @@ export default function Watchpage() {
       } else {
         setsuggestionVideos((prevVideos: any) => [...prevVideos, ...newVideos]);
       }
-    } catch (error:any) {
+    } catch (error: any) {
       ToastAndroid.show(`Error fetching videos`, ToastAndroid.SHORT);
       // console.log("Error fetching videos:", error);
     } finally {
@@ -181,34 +181,35 @@ export default function Watchpage() {
       </Text>
 
       <View>
-      <Text onPress={() => setIsExpanded(!isExpanded)} style={styles.viewsAndTimeText}>
-        {video?.views || 0} views · {createdAgo}
-        <TouchableOpacity
-        activeOpacity={1}
-        onPress={() => setIsExpanded(!isExpanded)}
-        style={styles.viewMoreContainer}
-        >
-        <Text style={styles.viewMore}>
-          {isExpanded ? "...less" : "...more"}
+        <Text onPress={() => setIsExpanded(!isExpanded)} style={styles.viewsAndTimeText}>
+          {video?.views || 0} views · {createdAgo}
+          <TouchableOpacity
+            activeOpacity={1}
+            onPress={() => setIsExpanded(!isExpanded)}
+            style={styles.viewMoreContainer}
+          >
+            <Text style={styles.viewMore}>
+              {isExpanded ? "...less" : "...more"}
+            </Text>
+          </TouchableOpacity>
         </Text>
-        </TouchableOpacity>
-      </Text>
       </View>
 
-      {/*  */}
+      {/* owner contaiener where you will see owner details */}
       <View style={styles.owner}>
         <View style={styles.ownerContainer}>
-          <TouchableOpacity onPress={() => handlePress(video.owner)}>
+
+          <TouchableOpacity onPress={() => handlePress(video?.owner)}>
             <Image source={{ uri: video?.owner?.avatar }} style={styles.avatar} />
           </TouchableOpacity>
-          {/* <View> */}
-          <Text style={styles.ownerText}>{video?.owner?.fullname || "Unknown User"}</Text>
-          <Text style={styles.subscribersText}>{video?.subscribers || 0}</Text>
-          {/* </View> */}
+
+          <Text onPress={() => handlePress(video?.owner)} style={styles.ownerText}>{video?.owner?.fullname || "Unknown User"}</Text>
+          <Text style={styles.subscribersText}>{video?.subscribersCount || 0}</Text>
+
         </View>
         <TouchableOpacity
           style={video?.isSubscribed ? styles.subscribeButton : styles.unsubscribeButton}
-          onPress={() => toggleSubscribe(video?.owner?.id)}
+          onPress={() => toggleSubscribe(video?.owner?._id)}
         >
           <Text style={video?.isSubscribed ? styles.subscribeText : styles.unsubscribeText}>
             {video?.isSubscribed ? "Subscribed" : "Subscribe"}
@@ -224,7 +225,7 @@ export default function Watchpage() {
               size={14}
               color={video?.isLiked ? "green" : "white"}
             />
-            <Text style={styles.likeText}>{video?.likes ? video.likes : 0}</Text>
+            <Text style={styles.likeText}>{video?.likesCount ? video.likesCount : 0}</Text>
           </Animated.View>
         </TouchableOpacity>
         <TouchableOpacity style={styles.shareButton}>
@@ -241,7 +242,7 @@ export default function Watchpage() {
       </View>
       <PlayListPopUp
         userId={localUser?.id}
-        videoId={video?.id}
+        videoId={video?._id}
         visible={playlistPopupVisible}
         onClose={() => setPlaylistPopupVisible(false)}
       />
@@ -253,7 +254,7 @@ export default function Watchpage() {
           setLogoutPopupVisible(false);
           router.push("/(auth)/login");
         }}
-        header = 'Login'
+        header='Login'
         title="You need to login to subscribe to this channel"
         nextBtn="Login"
       />
@@ -264,7 +265,7 @@ export default function Watchpage() {
     <>
       <View style={styles.container}>
         {loading && LoadingSpinner()}
-        <VideoScreen url={video?.url} />
+        <VideoScreen url={video?.url as string} />
 
         <View style={styles.commentContainer}>
           {isCommentOpened && <CommentsPage onClose={() => setIsCommentOpened(false)} />}
@@ -272,12 +273,12 @@ export default function Watchpage() {
 
         {/* description  */}
         {isExpanded && (
-        <DescriptionPage 
-        video={video}
-        createdOn={createdOn}
-        isExpanded={isExpanded}
-        setIsExpanded={setIsExpanded}
-        /> 
+          <DescriptionPage
+            video={video}
+            createdOn={createdOn}
+            isExpanded={isExpanded}
+            setIsExpanded={setIsExpanded}
+          />
         )
         }
         {/*  */}
@@ -303,7 +304,7 @@ const styles = StyleSheet.create({
     flex: 1,
     width: width,
     backgroundColor: "black",
-    paddingHorizontal:2
+    paddingHorizontal: 2
   },
   textContainer: {
     padding: 9,
@@ -333,7 +334,7 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: "400",
     fontFamily: "Arial",
-    marginTop:6
+    marginTop: 6
   },
 
   avatar: {
@@ -368,7 +369,7 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     textAlign: "center",
   },
-  
+
   subscribeButton: {
     backgroundColor: "#FF0000",
     paddingVertical: 5,
@@ -468,14 +469,14 @@ const styles = StyleSheet.create({
   commentContainer: {
     // flex:1,
   },
-  viewMoreContainer:{
+  viewMoreContainer: {
     // textAlign:'center'
   },
   viewMore: {
     color: "#6bd3ff",
     fontSize: 12,
     fontWeight: "bold",
-    marginLeft:10,
+    marginLeft: 10,
     // marginTop:10
   },
 

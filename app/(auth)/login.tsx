@@ -2,16 +2,15 @@ import { StyleSheet, Text, View, TouchableOpacity, Image, ScrollView } from 'rea
 import React, { useState } from 'react';
 import Input from '@/components/Input';
 import { useRouter } from 'expo-router';
-import { z } from 'zod';
-import { signinSchema, signUpValidation } from '@/zod/authZodValidation';
+import { signUpValidation } from '@/zod/authZodValidation';
 import axios from 'axios';
 import * as SecureStore from 'expo-secure-store';
-import { API_URI } from '@/utils/api';
+import { API_URI, AUTH_API_URI } from '@/utils/api';
 import { login } from '@/redux/authSlice';
 import { useDispatch } from 'react-redux';
 import * as ImagePicker from 'expo-image-picker';
 
-export default function Login({ navigation }: any) {
+export default function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -34,7 +33,7 @@ export default function Login({ navigation }: any) {
       data.append('username', username)
       data.append('password', password)
       const response = await axios.post(
-        `${API_URI}/api/v1/user/login/`,
+        `${AUTH_API_URI}/login`,
         data,
         {
           headers: {
@@ -43,16 +42,15 @@ export default function Login({ navigation }: any) {
           withCredentials: true,
         }
       );
-      // console.log(response.data)
-      const { user } = response.data;
-      // console.log('this is user',user)
+      const { user } = response.data.data;
       await SecureStore.setItemAsync('user', JSON.stringify(user));
-      await SecureStore.setItemAsync('accessToken', response.data.user.accessToken);
-      await SecureStore.setItemAsync('refreshToken', response.data.user.refreshToken);
+      await SecureStore.setItemAsync('accessToken', response.data.data.accessToken);
+      await SecureStore.setItemAsync('refreshToken', response.data.data.refreshToken);
       dispatch(login({ isLoggedIn: true, user: user }));
       router.push('/(home)');
     } catch (error: any) {
-      setError(JSON.stringify(error?.response?.data) || 'An error occurred during login.');
+      console.log(error?.message)
+      setError(JSON.stringify(error?.message) || 'An error occurred during login.');
       // alert(`Login error: ${error?.response?.data?.message || 'Please try again later.'}`);
     } finally {
       setLoading(false);

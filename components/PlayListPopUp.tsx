@@ -7,9 +7,9 @@ import * as SecureStorage from 'expo-secure-store';
 import Input from './Input';
 
 interface PlayListPopUpProps {
-    userId: number;
+    userId: string;
     visible: boolean;
-    videoId: number;
+    videoId: string;
     onClose: () => void;
 }
 

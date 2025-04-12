@@ -8,7 +8,6 @@ export default function Profile() {
   const { isLoggedIn , user} = useSelector((state: any) => state.auth);
   const { userDetails }: any = useLocalSearchParams();
   const router = useRouter();
- 
   if (!isLoggedIn) {
     return (
       <View style={styles.container}>

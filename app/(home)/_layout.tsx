@@ -1,7 +1,6 @@
 import { Link, Tabs, useRouter, useSegments } from "expo-router";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { Image, StyleSheet, View, TouchableOpacity } from "react-native";
-import AntDesign from "@expo/vector-icons/AntDesign";
 import { useSelector } from "react-redux";
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 
@@ -21,7 +20,7 @@ export default function HomeLayout() {
     router.push({
       pathname: '/(profile)',
       params: {
-        userDetails: JSON.stringify(user?.user),
+        userDetails: JSON.stringify(user?.user ?? undefined),
       },
     });
   };

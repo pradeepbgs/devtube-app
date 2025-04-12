@@ -1,3 +1,4 @@
+import './global.css'
 import { Stack } from "expo-router";
 import { StyleSheet, View, StatusBar, Text, SafeAreaView } from "react-native";
 import { Provider, useDispatch } from "react-redux";
@@ -8,7 +9,7 @@ import { login } from "@/redux/authSlice";
 import React, { useEffect, useState } from "react";
 import { isTokenExpired } from "@/utils/jwt";
 import axios from "axios";
-import { API_URI } from "@/utils/api";
+import { API_URI, AUTH_API_URI } from "@/utils/api";
 
 SplashScreen.preventAutoHideAsync();
 
@@ -33,14 +34,13 @@ function AppInitializer() {
       const refreshToken:string | null = await SecureStore.getItemAsync("refreshToken");
       const isTokenExpire:boolean = await isTokenExpired(accessToken as string);
       if(isTokenExpire){
-        const res = await axios.get(`${API_URI}/api/v1/user/refresh-token/`, {
+        const res = await axios.get(`${AUTH_API_URI}/refresh-token/`, {
           headers: { 
             'Content-Type': 'application/json',
             Authorization: `Bearer ${refreshToken}` 
           },
           withCredentials: true,
         });
-        
         if (res.data?.data) {
           const { accessToken: newAccessToken, refreshToken: newRefreshToken } = res.data.data;
         
@@ -51,12 +51,15 @@ function AppInitializer() {
   
       if (user) {
         dispatch(login({ isLoggedIn: true, user: JSON.parse(user) }));
+      } 
+      else {
+        dispatch(login({ isLoggedIn: false, user: null }));
       }
     } catch (error) {
-      // console.error("Error initializing user:", error);
+      // // console.error("Error initializing user:", error);
       // await SecureStore.deleteItemAsync("accessToken");
       // await SecureStore.deleteItemAsync("refreshToken");
-      // dispatch(login({ isLoggedIn: false, user: null }));
+      dispatch(login({ isLoggedIn: false, user: null }));
     } finally {
       setAppIsReady(true);
     }

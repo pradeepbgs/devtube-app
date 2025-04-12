@@ -24,12 +24,13 @@ import { logout } from "@/redux/authSlice";
 import { PopUp } from "@/components/PopUp";
 import Fontisto from '@expo/vector-icons/Fontisto';
 import EvilIcons from '@expo/vector-icons/EvilIcons';
+import { UserDetails, VideoDetailsT } from "@/types";
 
 interface userT {
   avatar?: string,
   coverImage?: string,
   email?: string,
-  id: number,
+  _id: string,
   username: string,
   fullname?: string,
   createdAt: string,
@@ -48,10 +49,10 @@ export default function Index() {
   const [logoutPopupVisible, setLogoutPopupVisible] = useState<boolean>(false);
   const [activeTab, setActiveTab] = useState<string>("Home");
   const { userDetails }: any = useLocalSearchParams();
-  const localUser = useSelector((state: any) => state.auth?.user?.user);
+  const localUser:UserDetails = useSelector((state: any) => state.auth?.user?.user);
   const parsedUser: userT = userDetails ? JSON.parse(userDetails) : {};
   const { user }:{user:userT} = useSelector((state: any) => state.userProfile)
-  const { userVideos } = useSelector((state: any) => state.userProfile)
+  const { userVideos }:{userVideos:VideoDetailsT[]} = useSelector((state: any) => state.userProfile)
   const isLoggedIn = useSelector((state:any) => state.auth.isLoggedIn)
   const router = useRouter()
   const dispatch = useDispatch()
@@ -61,23 +62,22 @@ export default function Index() {
   const monthCreated = joinedAgo.toLocaleString('default', { month: 'long' });
   const yearCreated = joinedAgo.getFullYear();  
 
-
   const getUserProfile = async () => {
-    if (!parsedUser || !parsedUser.id) return;
+    if (!parsedUser || !parsedUser._id) return;
     const accessToken = await SecureStore.getItemAsync("accessToken");
     try {
       const userData = await getUserProfileData(parsedUser.username,accessToken as string)
       if (userData.data) {
         dispatch(setUser(userData.data));
       }
-    } catch (error) {
+    } catch (error:any) {
       ToastAndroid.show("Something went wrong while fetching user profile", ToastAndroid.SHORT)
     } finally {
       setLoading(false);
     }
   };
 
-  const fetchUserVideos = async (userId: number) => {
+  const fetchUserVideos = async (userId: string) => {
     // if(userVideos.length > 0) return
     if (!userId) return;
     setNextUserVideoLoading(true);
@@ -94,7 +94,6 @@ export default function Index() {
 
   const handleLogout = async () => {
     const accessToken = await SecureStore.getItemAsync("accessToken");
-
     try {
       await logoutUser(accessToken as string)
       dispatch(logout())
@@ -109,12 +108,12 @@ export default function Index() {
   };
 
   const toggleSubscribe = async () => {
-    if(!isLoggedIn || !parsedUser?.id) return ToastAndroid.show("Please login to subscribe",ToastAndroid.SHORT)
+    if(!isLoggedIn || !parsedUser?._id) return ToastAndroid.show("Please login to subscribe",ToastAndroid.SHORT)
     
     const accessToken = await SecureStore.getItemAsync("accessToken");
     
     try {
-      const response = await subscribe(parsedUser?.id, accessToken as string)
+      const response = await subscribe(parsedUser?._id, accessToken as string)
       if (response?.message === "Subscribed successfully") {
         dispatch(setUser({
           ...user,
@@ -138,7 +137,7 @@ export default function Index() {
     dispatch(setUser(parsedUser))
     const fetchData = async () => {
       await getUserProfile();
-      await fetchUserVideos(parsedUser?.id);
+      await fetchUserVideos(parsedUser?._id);
     };
     setLoading(true);
     fetchData().finally(() => setLoading(false));
@@ -150,7 +149,7 @@ export default function Index() {
     dispatch
     setIsPageRefreshing(true)
     await getUserProfile()
-    await fetchUserVideos(parsedUser?.id)
+    await fetchUserVideos(parsedUser?._id)
     setIsPageRefreshing(false)
   };
 
@@ -227,7 +226,7 @@ export default function Index() {
               <Text style={styles.statLabel}>Posts</Text>
             </View> */}
             <View style={styles.actionsContainer}>
-              {localUser?.id === user?.id ? (
+              {localUser?._id === user?._id ? (
                 <AntDesign
                   onPress={() => setLogoutPopupVisible(true)}
                  name="logout" size={23} color="red" />
@@ -385,12 +384,15 @@ const styles = StyleSheet.create({
     // paddingHorizontal:10,
   },
   profileImage: {
-    width: 80,
-    height: 80,
+    width: 70,
+    height: 70,
     borderRadius: 5,
     borderWidth: 2,
     borderColor: "white",
     resizeMode: 'cover',
+    backgroundColor:'gray',
+    left:7,
+    marginRight:10
   },
   userName: {
     color: "#7BD3EA",
@@ -400,6 +402,7 @@ const styles = StyleSheet.create({
     color: "white",
     fontSize: 17,
     fontWeight: "bold",
+    marginTop:4,
   },
   userBio: {
     color: "gray",

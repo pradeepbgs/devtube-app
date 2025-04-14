@@ -3,32 +3,32 @@ import {
   Dimensions,
   FlatList,
   Image,
-  ScrollView,
   StyleSheet,
   Text,
   ToastAndroid,
   TouchableOpacity,
   View,
 } from "react-native";
-import React, { useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import VideoScreen from "./player";
 import { timeAgo, whenCreated } from "@/utils/timeAgo";
 import axios from "axios";
 import { useSelector } from "react-redux";
-import { API_URI, VIDEO_API_URI } from "@/utils/api";
+import { API_URI, LIKE_API_URI, VIDEO_API_URI } from "@/utils/api";
 import * as SecureStore from "expo-secure-store";
 import AntDesign from "@expo/vector-icons/AntDesign";
 import EvilIcons from "@expo/vector-icons/EvilIcons";
 import CommentsPage from "../(comments)/comments";
 import { handleBounce } from "@/utils/bounce";
 import { LoadingSpinner } from "@/components/loadSpinner";
-import VideoListingCard from "@/components/VideoListingCard";
 import { PopUp } from "@/components/PopUp";
 import { PlayListPopUp } from "@/components/PlayListPopUp";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import DescriptionPage from "./DescriptionPage";
 import { VideoDetailsT } from "@/types";
+import VideoCard from "@/components/VideoCard";
+import { globalAccessToken } from "@/service/apiService";
 
 const { width } = Dimensions.get("window");
 
@@ -51,16 +51,18 @@ export default function Watchpage() {
   const router = useRouter();
   const bounceAnim = useRef(new Animated.Value(1)).current;
 
+  const renderVideoCard = useCallback(({ item }: any) => <VideoCard video={item} />, []);
+
   // Fetch video details from API
   const getVideoDetails = async () => {
     setLoading(true);
     if (!videoData?._id) return;
 
-    const accessToken = (await SecureStore.getItemAsync("accessToken"));
+    // const accessToken = (await SecureStore.getItemAsync("accessToken"));
     try {
       const response = await axios.get(`${VIDEO_API_URI}/${videoData._id}`, {
         headers: {
-          ...(accessToken && { Authorization: `Bearer ${accessToken}` }),
+          ...(globalAccessToken && { Authorization: `Bearer ${globalAccessToken}` }),
         },
         withCredentials: true,
       });
@@ -81,11 +83,11 @@ export default function Watchpage() {
       return;
     }
     if (!channelId) return;
-    const accessToken = await SecureStore.getItemAsync("accessToken");
+    // const accessToken = await SecureStore.getItemAsync("accessToken");
 
     try {
       const response = await axios.post(`${API_URI}/api/v1/subscription/toggle/${channelId}/`, null, {
-        headers: { Authorization: `Bearer ${accessToken}` },
+        headers: { Authorization: `Bearer ${globalAccessToken}` },
         withCredentials: true,
       });
 
@@ -107,37 +109,38 @@ export default function Watchpage() {
       // alert(`Error toggling subscription: ${JSON.stringify(error.response?.data)}`);
     }
   };
-
   const toggleLike = async () => {
     if (!isLoggedIn) {
       setLogoutPopupVisible(true);
       return;
     }
+
     if (!video?._id) return;
+
     handleBounce(bounceAnim);
-    const accessToken = await SecureStore.getItemAsync("accessToken");
-    try {
-      const res = await axios.post(`${API_URI}/api/v1/like/toggle/${video?.id}/`, null, {
-        headers: { Authorization: `Bearer ${accessToken}` },
+
+    // Optimistic UI update
+    const wasLiked = video.isLiked;
+    const newLikedState = !wasLiked;
+    setVideo((prevVideo: any) => ({
+      ...prevVideo,
+      isLiked: newLikedState,
+      likesCount: prevVideo.likesCount + (newLikedState ? 1 : -1),
+    }));
+    
+      axios
+      .post(`${LIKE_API_URI}/toggle/v/${video?._id}`, null, {
+        headers: { Authorization: `Bearer ${globalAccessToken}` },
         withCredentials: true,
-      });
-      if (res.data.message === "Video liked successfully") {
+      })
+      .catch(err => {
         setVideo((prevVideo: any) => ({
           ...prevVideo,
-          isLiked: true,
-          likes: prevVideo?.likes + 1,
+          isLiked: wasLiked,
+          likesCount: prevVideo.likesCount + (wasLiked ? 1 : -1),
         }));
-      } else if (res.data.message === "Video unliked successfully") {
-        setVideo((prevVideo: any) => ({
-          ...prevVideo,
-          isLiked: false,
-          likes: prevVideo?.likes - 1,
-        }));
-      }
-    } catch (error: any) {
-      ToastAndroid.show(`Error toggling subscription`, ToastAndroid.SHORT);
-      // alert(`Error toggling subscription: ${JSON.stringify(error.response?.data)}`);
-    }
+        ToastAndroid.show(`Error toggling like: ${err?.message}`, ToastAndroid.SHORT);
+      })
   };
 
   const getSuggestionVideo = async () => {
@@ -153,7 +156,7 @@ export default function Watchpage() {
         setsuggestionVideos((prevVideos: any) => [...prevVideos, ...newVideos]);
       }
     } catch (error: any) {
-      ToastAndroid.show(`Error fetching videos`, ToastAndroid.SHORT);
+      ToastAndroid.show(`Error fetching videos ${error?.message}`, ToastAndroid.SHORT);
       // console.log("Error fetching videos:", error);
     } finally {
       setLoading(false);
@@ -172,7 +175,6 @@ export default function Watchpage() {
     getVideoDetails();
     getSuggestionVideo();
   }, [videoData?.id]);
-
 
   const renderHeader = () => (
     <View style={styles.textContainer}>
@@ -200,7 +202,9 @@ export default function Watchpage() {
         <View style={styles.ownerContainer}>
 
           <TouchableOpacity onPress={() => handlePress(video?.owner)}>
-            <Image source={{ uri: video?.owner?.avatar }} style={styles.avatar} />
+            <Image source={{
+              uri: video?.owner?.avatar ?? 'https://cdn-icons-png.flaticon.com/512/6596/6596121.png'
+            }} style={styles.avatar} />
           </TouchableOpacity>
 
           <Text onPress={() => handlePress(video?.owner)} style={styles.ownerText}>{video?.owner?.fullname || "Unknown User"}</Text>
@@ -241,7 +245,7 @@ export default function Watchpage() {
         </TouchableOpacity>
       </View>
       <PlayListPopUp
-        userId={localUser?.id}
+        userId={localUser?._id}
         videoId={video?._id}
         visible={playlistPopupVisible}
         onClose={() => setPlaylistPopupVisible(false)}
@@ -287,7 +291,7 @@ export default function Watchpage() {
           style={styles.videocard}
           data={suggestionVideos}
           keyExtractor={(item: any, index) => item?._id ?? index.toString()}
-          renderItem={({ item }) => <VideoListingCard video={item} />}
+          renderItem={renderVideoCard}
           showsVerticalScrollIndicator={false}
           // onEndReached={handleEndReached}
           ListHeaderComponent={renderHeader}
@@ -304,7 +308,7 @@ const styles = StyleSheet.create({
     flex: 1,
     width: width,
     backgroundColor: "black",
-    paddingHorizontal: 2
+    paddingHorizontal: 2,
   },
   textContainer: {
     padding: 9,
@@ -404,7 +408,7 @@ const styles = StyleSheet.create({
   buttonsContainer: {
     flexDirection: "row",
     justifyContent: "space-between",
-    marginTop: 15,
+    marginTop: 10,
     alignItems: "center",
     textAlign: "center",
   },
@@ -438,26 +442,26 @@ const styles = StyleSheet.create({
   shareButton: {
     borderRadius: 30,
     backgroundColor: "#252422",
-    padding: 12,
-    paddingLeft: 20,
-    width: 55,
-    height: 35,
+    padding: 8,
+    paddingLeft: 18,
+    width: 50,
+    height: 30,
   },
   commentButton: {
     borderRadius: 80,
     backgroundColor: "#252422",
-    padding: 6,
-    paddingLeft: 15,
-    width: 55,
-    height: 35,
+    padding: 2,
+    paddingLeft: 12,
+    width: 50,
+    height: 30,
   },
   saveButton: {
     borderRadius: 80,
     backgroundColor: "#252422",
     padding: 8,
     paddingLeft: 19,
-    width: 55,
-    height: 35,
+    width: 50,
+    height: 30,
   },
   buttonText: {
     color: "white",
@@ -465,12 +469,6 @@ const styles = StyleSheet.create({
   },
   videocard: {
     marginTop: 5,
-  },
-  commentContainer: {
-    // flex:1,
-  },
-  viewMoreContainer: {
-    // textAlign:'center'
   },
   viewMore: {
     color: "#6bd3ff",

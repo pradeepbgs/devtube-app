@@ -7,7 +7,6 @@ import PlayListCard from '@/components/PlayListCard';
 import { LoadingSpinner } from '@/components/loadSpinner';
 import { setPlayLists } from '@/redux/userProfileSlice';
 import AntDesign from '@expo/vector-icons/AntDesign';
-import { set } from 'zod';
 
 const AnimatedFlatList = Animated.createAnimatedComponent(FlatList)
 
@@ -30,7 +29,7 @@ export default function ListOfPlayList({header,fectUserDetails}:any) {
     // }
     setLoading(true);
     try {
-      const data = await getUserPlayLists(parsedUser?.id);
+      const data = await getUserPlayLists(parsedUser?._id);
       dispatch(setPlayLists({
         userId:parsedUser.id,
         playlists:data
@@ -46,7 +45,7 @@ export default function ListOfPlayList({header,fectUserDetails}:any) {
   const handleRefresh = async () => {
     setIsPageRefreshing(true)
     dispatch(setPlayLists({
-      userId: parsedUser.id,
+      userId: parsedUser._id,
       playLists: []
     }));
     await getUserPlaylist()
@@ -59,7 +58,7 @@ export default function ListOfPlayList({header,fectUserDetails}:any) {
       if (parsedUser) await getUserPlaylist();
     };
     fetchData()
-  }, [parsedUser?.id,dispatch]);
+  }, [parsedUser?._id,dispatch]);
 
   if(playList?.length === 0){
     return (
@@ -78,7 +77,7 @@ export default function ListOfPlayList({header,fectUserDetails}:any) {
     <AnimatedFlatList
        style={styles.container}
        data={playList}
-       keyExtractor={(item: any, index) => item?.id ?? index.toString()} 
+       keyExtractor={(item: any, index) => item?._id ?? index.toString()} 
        renderItem={renderPlayListCard}
        refreshing={isPageRefreshing}
        onRefresh={handleRefresh}

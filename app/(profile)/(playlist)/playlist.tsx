@@ -25,16 +25,16 @@ export default function Playlist() {
   const dispatch = useDispatch();
   
   const playListVideos = 
-  useSelector((state: any) => state.userProfile.playListVideos[`${parsedPlayList?.owner?.id}-${parsedPlayList?.id}`]) ?? [];
+  useSelector((state: any) => state.userProfile.playListVideos[`${parsedPlayList?.owner?._id}-${parsedPlayList?._id}`]) ?? [];
 
 
   const getPlayListvideos = async () => {
     try {
       if (!parsedPlayList) return;
-      const res = await getPlayListVideos(parsedPlayList?.id);
+      const res = await getPlayListVideos(parsedPlayList?._id);
       if (res) {
         dispatch(setPlayListVideos({
-          userId:`${parsedPlayList?.owner?.id}-${parsedPlayList?.id}`,
+          userId:`${parsedPlayList?.owner?._id}-${parsedPlayList?._id}`,
           videos:res
         }));
       }
@@ -51,7 +51,7 @@ export default function Playlist() {
   const handleRefresh = async () => {
     setIsRefreshing(true);
     dispatch(setPlayListVideos({
-      userId:`${parsedPlayList?.owner?.id}-${parsedPlayList?.id}`,
+      userId:`${parsedPlayList?.owner?._id}-${parsedPlayList?._id}`,
       videos:[]
     }));
     await getPlayListvideos();
@@ -66,7 +66,7 @@ export default function Playlist() {
   const handleRemoveVideo = async () => {
     // const accessToken = await SecureStore.getItemAsync("accessToken");
     try {
-      await removeVideoToPlayList(parsedPlayList?.id, removeVideoId!, user?.accessToken)
+      await removeVideoToPlayList(parsedPlayList?._id, removeVideoId!, user?.accessToken)
       setRemoveVideoPopUp(false)
       await getPlayListvideos()
     } catch (error) {

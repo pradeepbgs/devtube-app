@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Modal, StyleSheet, Text, View, ActivityIndicator, TouchableOpacity, ScrollView, Button } from 'react-native';
-import { addVideoToPlayList, createUserPlayLists, getUserPlayLists } from '@/service/apiService';
+import { addVideoToPlayList, createUserPlayLists, getUserPlayLists, globalAccessToken } from '@/service/apiService';
 import { setPlayLists } from '@/redux/userProfileSlice';
 import { useDispatch, useSelector } from 'react-redux';
 import * as SecureStorage from 'expo-secure-store';
@@ -58,10 +58,10 @@ export const PlayListPopUp: React.FC<PlayListPopUpProps> = ({
 
     const handleSave = async () => {
         try {
-            const accessToken = await SecureStorage.getItem('accessToken') as string;
+            // const accessToken = await SecureStorage.getItem('accessToken') as string;
             if (selectedPlayLists) {
                 const requests = selectedPlayLists.map((playlist: any) =>
-                    addVideoToPlayList(playlist?.id, videoId, accessToken)
+                    addVideoToPlayList(playlist?._id, videoId, globalAccessToken as string)
                 );
                 const results = await Promise.all(requests);
                 const allSuccessful = results.every(res => res?.success === true);
@@ -73,18 +73,19 @@ export const PlayListPopUp: React.FC<PlayListPopUpProps> = ({
     };
 
     const createNewPlayList = async () => {
-        setPlayListCreatingLoading(true);
-        const accessToken = await SecureStorage.getItem('accessToken') as string;
+        // setPlayListCreatingLoading(true);
+        // const accessToken = await SecureStorage.getItem('accessToken') as string;
         try {
-            const res = await createUserPlayLists(newPlayListName, accessToken);
+            console.log("calling ")
+            const res = await createUserPlayLists(newPlayListName, globalAccessToken as string);
             if (res?.success) {
                 await getUserPlaylist();  // Fetch updated playlists after creation
                 setNewPlayListName('');  // Reset input field
             } else {
                 console.error('Failed to create playlist');
             }
-        } catch (error) {
-            console.error('Error creating playlist:', error);
+        } catch (error:any) {
+            console.error('Error creating playlist:', error?.message);
         } finally {
             setPlayListCreatingLoading(false);
         }

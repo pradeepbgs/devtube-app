@@ -1,6 +1,4 @@
-import { LoadingSpinner } from '@/components/loadSpinner';
 import { useVideoPlayer, VideoView } from 'expo-video';
-import { useState } from 'react';
 import { StyleSheet, View, Dimensions } from 'react-native';
 
 const { width } = Dimensions.get('window');

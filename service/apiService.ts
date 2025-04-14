@@ -2,15 +2,17 @@ import { API_URI, AUTH_API_URI, PLAYLIST_API_URI, SUBSCRIBE_API_URI, USER_API_UR
 import axios from 'axios';
 import * as SecureStore from 'expo-secure-store';
 
+export let globalAccessToken = SecureStore.getItem('accessToken')
+
 
 export const getVideoDetails = async (videoId: string) => {
   if (!videoId) return;
 
-  const accessToken = await SecureStore.getItemAsync("accessToken");
+  // const accessToken = await SecureStore.getItemAsync("accessToken");
 
   try {
     const response = await axios.get(`${VIDEO_API_URI}/${videoId}`, {
-      headers: { Authorization: `Bearer ${accessToken}` },
+      headers: { Authorization: `Bearer ${globalAccessToken}` },
       withCredentials: true,
     });
 
@@ -35,10 +37,10 @@ export const getUserProfileData = async (username: string, accessToken:string) =
 
 export const fetchUserVideosData = async (userId:string) => {
   try {
-    const accessToken = await SecureStore.getItemAsync("accessToken");
+    // const accessToken = await SecureStore.getItemAsync("accessToken");
     const response = await axios.get(`${VIDEO_API_URI}/c/${userId}`, {
       headers: {
-        Authorization: `Bearer ${accessToken}`,
+        Authorization: `Bearer ${globalAccessToken}`,
       },
       withCredentials: true,
     });
@@ -58,18 +60,20 @@ export const getUserPlayLists = async (userId: string) => {
 }
 
 export const createUserPlayLists = async (playlistName: string, accessToken:string) => {
-  const response = await axios.post(`${PLAYLIST_API_URI}/create/`,
+  const response = await axios.post(`${PLAYLIST_API_URI}`,
     {
-      playlistName:playlistName
+      name:playlistName
     },
     {
       headers: { Authorization: `Bearer ${accessToken}` },
       withCredentials: true
     });
+    console.log('logging res of ',response?.data)
   return response?.data || [];
 }
 
 export const getPlayListVideos = async (playListId: string) => {
+  // in backend needs to make an api that can get the playlist videos
   const response = await axios.get(`${PLAYLIST_API_URI}/${playListId}/`,
     {withCredentials: true, });
     return response?.data?.data ?? []
@@ -98,8 +102,8 @@ export const subscribe = async (channelId:string,accessToken:string) => {
 }
 
 export const addVideoToPlayList = async (playListId:string,videoId:string,accessToken:string) => {
-  const response = await axios.post(
-    `${PLAYLIST_API_URI}/add-video/${playListId}/${videoId}/`,
+  const response = await axios.patch(
+    `${PLAYLIST_API_URI}/add/${videoId}/${playListId}/`,
     null,
     {
       headers: { Authorization: `Bearer ${accessToken}` },
@@ -129,13 +133,13 @@ export interface BodyT {
 }
 
 export const uploadVideo = async (formData:BodyT) => {
-  const accessToken = await SecureStore.getItemAsync("accessToken");
+  // const accessToken = await SecureStore.getItemAsync("accessToken");
   const response = await fetch(`${VIDEO_API_URI}/upload`,{
     method:'POST',
     body:formData,
     headers:{
       'Content-Type':'multipart/form-data',
-      'Authorization':`Bearer ${accessToken}`
+      'Authorization':`Bearer ${globalAccessToken}`
     },
     credentials:'include',
   });

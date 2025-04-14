@@ -13,7 +13,7 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import { useDispatch, useSelector } from "react-redux";
 import { setUser, setUserVideos } from "@/redux/userProfileSlice";
 import { LoadingSpinner } from "@/components/loadSpinner";
-import { fetchUserVideosData, getUserProfileData, logoutUser, subscribe } from "@/service/apiService";
+import { fetchUserVideosData, getUserProfileData, globalAccessToken, logoutUser, subscribe } from "@/service/apiService";
 import { Animated } from "react-native";
 import ListOfPlayList from "./(playlist)/ListOfPlayList";
 import AboutPage from "./about";
@@ -56,6 +56,7 @@ export default function Index() {
   const isLoggedIn = useSelector((state:any) => state.auth.isLoggedIn)
   const router = useRouter()
   const dispatch = useDispatch()
+  
   const renderVideoCard = useCallback(({ item }: any) => <VideoListingCard video={item} />, []);
 
   const joinedAgo = new Date(user?.createdAt)
@@ -64,9 +65,9 @@ export default function Index() {
 
   const getUserProfile = async () => {
     if (!parsedUser || !parsedUser._id) return;
-    const accessToken = await SecureStore.getItemAsync("accessToken");
+    // const accessToken = await SecureStore.getItemAsync("accessToken");
     try {
-      const userData = await getUserProfileData(parsedUser.username,accessToken as string)
+      const userData = await getUserProfileData(parsedUser.username,globalAccessToken as string)
       if (userData.data) {
         dispatch(setUser(userData.data));
       }
@@ -93,9 +94,9 @@ export default function Index() {
   };
 
   const handleLogout = async () => {
-    const accessToken = await SecureStore.getItemAsync("accessToken");
+    // const accessToken = await SecureStore.getItemAsync("accessToken");
     try {
-      await logoutUser(accessToken as string)
+      await logoutUser(globalAccessToken as string)
       dispatch(logout())
       await SecureStore.deleteItemAsync("accessToken");
       await SecureStore.deleteItemAsync("refreshToken");
@@ -110,10 +111,10 @@ export default function Index() {
   const toggleSubscribe = async () => {
     if(!isLoggedIn || !parsedUser?._id) return ToastAndroid.show("Please login to subscribe",ToastAndroid.SHORT)
     
-    const accessToken = await SecureStore.getItemAsync("accessToken");
+    // const accessToken = await SecureStore.getItemAsync("accessToken");
     
     try {
-      const response = await subscribe(parsedUser?._id, accessToken as string)
+      const response = await subscribe(parsedUser?._id, globalAccessToken as string)
       if (response?.message === "Subscribed successfully") {
         dispatch(setUser({
           ...user,
@@ -205,7 +206,7 @@ export default function Index() {
         }}
         >
           <Image
-            source={{ uri: user?.avatar || "https://via.placeholder.com/100" }}
+            source={{ uri: user?.avatar || "https://cdn-icons-png.flaticon.com/512/6596/6596121.png" }}
             style={styles.profileImage}
           />
         </TouchableOpacity>
@@ -441,7 +442,7 @@ const styles = StyleSheet.create({
   actionButtonText: {
     color: "white",
     fontWeight: "bold",
-    fontSize:11
+    fontSize:13
   },
   statsMainConatainer: {
     flex: 1,

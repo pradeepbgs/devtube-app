@@ -1,4 +1,4 @@
-import { StyleSheet, Text, View, TouchableOpacity, Image, ScrollView } from 'react-native';
+import { StyleSheet, Text, TouchableOpacity, Image, ScrollView } from 'react-native';
 import React, { useState } from 'react';
 import Input from '@/components/Input';
 import { useRouter } from 'expo-router';

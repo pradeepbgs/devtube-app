@@ -8,7 +8,7 @@ import { Menu } from 'react-native-paper';
 const { width } = Dimensions.get('window');
 
 
-const VideoCard = ({ video, onPress }: any) => {
+const VideoCard = ({ video }: any) => {
   const [menuVisible, setMenuVisible] = useState<boolean>(false);
   const formattedDuration = formatDuration(video?.duration);
   const timeDifference = timeAgo(video?.createdAt);
@@ -82,7 +82,7 @@ const styles = StyleSheet.create({
   card: {
     width: width * 0.96,
     // marginBottom: 12,/
-    borderRadius: 12,
+    // borderRadius: 12,
     overflow: 'hidden',
     alignSelf: 'center',
     elevation: 3,
@@ -92,7 +92,7 @@ const styles = StyleSheet.create({
     width: '100%',
     height: width * 0.56,
     resizeMode: 'cover',
-    borderRadius: 12,
+    borderRadius: 8,
   },
   infoContainer: {
     flexDirection: 'row',

@@ -10,6 +10,7 @@ import AntDesign from '@expo/vector-icons/AntDesign';
 import { PopUp } from '@/components/PopUp';
 import PlayListVideoSettingPopUp from '@/components/PlayListVideoSettingPopUp';
 import PlayListSetting from './PlayListSetting';
+import { Colors } from '@/constant/colors';
 
 const AnimatedFlatList = Animated.createAnimatedComponent(FlatList);
 
@@ -31,11 +32,11 @@ export default function Playlist() {
   const getPlayListvideos = async () => {
     try {
       if (!parsedPlayList) return;
-      const res = await getPlayListVideos(parsedPlayList?._id);
-      if (res) {
+      const playlist = await getPlayListVideos(parsedPlayList?._id);
+      if (playlist) {
         dispatch(setPlayListVideos({
           userId:`${parsedPlayList?.owner?._id}-${parsedPlayList?._id}`,
-          videos:res
+          videos:playlist?.videos
         }));
       }
     } catch (error: any) {
@@ -80,7 +81,7 @@ export default function Playlist() {
 
   useEffect(() => {
     getPlayListvideos();
-  }, [parsedPlayList?.id,dispatch]);
+  }, [parsedPlayList?._id,dispatch]);
 
 
   const videos = playListVideos || [];
@@ -157,12 +158,12 @@ export default function Playlist() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: 'black',
+    backgroundColor: Colors.charCoalBlack,
     width: '100%',
   },
   headerContainer: {
     width: '100%',
-    backgroundColor: 'black',
+    backgroundColor: Colors.charCoalBlack,
   },
   image: {
     width: '100%',
@@ -192,6 +193,8 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: 'gray',
     marginTop: 4,
+    marginLeft:10,
+    padding:10
   },
   settingsIcon: {
     marginTop: 10,

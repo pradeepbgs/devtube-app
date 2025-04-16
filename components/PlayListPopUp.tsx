@@ -1,9 +1,22 @@
 import React, { useEffect, useState } from 'react';
-import { Modal, StyleSheet, Text, View, ActivityIndicator, TouchableOpacity, ScrollView, Button } from 'react-native';
-import { addVideoToPlayList, createUserPlayLists, getUserPlayLists, globalAccessToken } from '@/service/apiService';
+import {
+    Modal,
+    StyleSheet,
+    Text,
+    View,
+    ActivityIndicator,
+    TouchableOpacity,
+    ScrollView,
+    Button,
+} from 'react-native';
+import {
+    addVideoToPlayList,
+    createUserPlayLists,
+    getUserPlayLists,
+    globalAccessToken,
+} from '@/service/apiService';
 import { setPlayLists } from '@/redux/userProfileSlice';
 import { useDispatch, useSelector } from 'react-redux';
-import * as SecureStorage from 'expo-secure-store';
 import Input from './Input';
 
 interface PlayListPopUpProps {
@@ -13,7 +26,7 @@ interface PlayListPopUpProps {
     onClose: () => void;
 }
 
-export const PlayListPopUp: React.FC<PlayListPopUpProps> = ({
+const PlayListPopUp: React.FC<PlayListPopUpProps> = ({
     userId,
     videoId,
     visible,
@@ -22,11 +35,11 @@ export const PlayListPopUp: React.FC<PlayListPopUpProps> = ({
     const [loading, setLoading] = useState<boolean>(false);
     const [selectedPlayLists, setSelectedPlayLists] = useState<string[]>([]);
     const [newPlayListName, setNewPlayListName] = useState<string>('');
+    const [showInput, setShowInput] = useState<boolean>(false);
     const [playListCreatingLoading, setPlayListCreatingLoading] = useState<boolean>(false);
 
-    const localUser = useSelector((state: any) => state.userProfile.user);
-    const playList = useSelector((state: any) => state.userProfile?.playLists[userId]) ?? [];
     const dispatch = useDispatch();
+    const playList = useSelector((state: any) => state.userProfile?.playLists[userId]) ?? [];
 
     const getUserPlaylist = async () => {
         setLoading(true);
@@ -34,7 +47,7 @@ export const PlayListPopUp: React.FC<PlayListPopUpProps> = ({
             const data = await getUserPlayLists(userId);
             dispatch(setPlayLists({ userId: userId, playlists: data }));
         } catch (error: any) {
-            // console.error('Error fetching playlists:', error);
+            console.error('Error fetching playlists:', error);
         } finally {
             setLoading(false);
         }
@@ -42,29 +55,24 @@ export const PlayListPopUp: React.FC<PlayListPopUpProps> = ({
 
     useEffect(() => {
         if (!playList || playList.length === 0) {
-            getUserPlaylist(); 
+            getUserPlaylist();
         }
     }, []);
 
-    const handleToggle = (name: string) => {
-        setSelectedPlayLists((prev) => {
-            if (prev?.includes(name)) {
-                return prev.filter((item) => item !== name);
-            } else {
-                return [...(prev || []), name];
-            }
-        });
+    const handleToggle = (item: any) => {
+        setSelectedPlayLists((prev) =>
+            prev.includes(item._id) ? prev.filter((id) => id !== item._id) : [...prev, item._id]
+        );
     };
 
     const handleSave = async () => {
         try {
-            // const accessToken = await SecureStorage.getItem('accessToken') as string;
-            if (selectedPlayLists) {
-                const requests = selectedPlayLists.map((playlist: any) =>
-                    addVideoToPlayList(playlist?._id, videoId, globalAccessToken as string)
+            if (selectedPlayLists.length > 0) {
+                const requests = selectedPlayLists.map((playlistId) =>
+                    addVideoToPlayList(playlistId, videoId, globalAccessToken as string)
                 );
                 const results = await Promise.all(requests);
-                const allSuccessful = results.every(res => res?.success === true);
+                const allSuccessful = results.every((res) => res?.success === true);
                 if (allSuccessful) onClose();
             }
         } catch (error) {
@@ -73,18 +81,18 @@ export const PlayListPopUp: React.FC<PlayListPopUpProps> = ({
     };
 
     const createNewPlayList = async () => {
-        // setPlayListCreatingLoading(true);
-        // const accessToken = await SecureStorage.getItem('accessToken') as string;
+        if (!newPlayListName.trim()) return;
+        setPlayListCreatingLoading(true);
         try {
-            console.log("calling ")
-            const res = await createUserPlayLists(newPlayListName, globalAccessToken as string);
+            const res = await createUserPlayLists(newPlayListName.trim(), globalAccessToken as string);
             if (res?.success) {
-                await getUserPlaylist();  // Fetch updated playlists after creation
-                setNewPlayListName('');  // Reset input field
+                await getUserPlaylist();
+                setNewPlayListName('');
+                setShowInput(false);
             } else {
                 console.error('Failed to create playlist');
             }
-        } catch (error:any) {
+        } catch (error: any) {
             console.error('Error creating playlist:', error?.message);
         } finally {
             setPlayListCreatingLoading(false);
@@ -97,47 +105,70 @@ export const PlayListPopUp: React.FC<PlayListPopUpProps> = ({
                 <View style={styles.modalContent}>
                     {loading ? (
                         <ActivityIndicator size="large" color="#0000ff" />
-                    ) : playList?.length === 0 ? (
-                        <View>
-                            <Text style={styles.modalTitle}>You don't have any playlists</Text>
-                            <Input
-                                label="Create a new PlayList"
-                                placeholder="Enter playlist name"
-                                value={newPlayListName}
-                                onChangeText={setNewPlayListName}
-                            />
-                            <View style={styles.actionButtons}>
-                                <Button title="Cancel" onPress={onClose} color="red" />
-                                {playListCreatingLoading ? (
-                                    <Text style={styles.modalTitle}>Creating...</Text>
-                                ) : (
-                                    <Button title="Create" onPress={createNewPlayList} />
-                                )}
-                            </View>
-                        </View>
                     ) : (
                         <>
-                            <Text style={styles.modalTitle}>Select a playlist</Text>
-                            <ScrollView style={styles.scrollContainer}>
-                                {playList?.map((item: any) => (
-                                    <TouchableOpacity
-                                        key={item.name}
-                                        onPress={() => handleToggle(item)}
-                                        style={styles.playListItem}
-                                    >
-                                        <View style={styles.checkbox}>
-                                            {selectedPlayLists?.includes(item) && (
-                                                <View style={styles.checkboxSelected} />
-                                            )}
-                                        </View>
-                                        <Text style={styles.playlistText}>{item.name}</Text>
-                                    </TouchableOpacity>
-                                ))}
-                            </ScrollView>
-                            <View style={styles.actionButtons}>
-                                <Button title="Cancel" onPress={onClose} color="red" />
-                                <Button title="Save" onPress={handleSave} />
-                            </View>
+                            <Text style={styles.modalTitle}>
+                                {playList?.length === 0 ? "You don't have any playlists" : "Select a playlist"}
+                            </Text>
+
+                            {playList?.length > 0 && (
+                                <ScrollView style={styles.scrollContainer}>
+                                    {playList.map((item: any) => (
+                                        <TouchableOpacity
+                                            key={item._id}
+                                            onPress={() => handleToggle(item)}
+                                            style={styles.playListItem}
+                                        >
+                                            <View style={styles.checkbox}>
+                                                {selectedPlayLists.includes(item._id) && (
+                                                    <View style={styles.checkboxSelected} />
+                                                )}
+                                            </View>
+                                            <Text style={styles.playlistText}>{item.name}</Text>
+                                        </TouchableOpacity>
+                                    ))}
+                                </ScrollView>
+                            )}
+
+                            {/* Create New Toggle Button */}
+                            {!showInput && (
+                                <TouchableOpacity onPress={() => setShowInput(true)} style={styles.createButton}>
+                                    <Text style={styles.createButtonText}>+ Create New Playlist</Text>
+                                </TouchableOpacity>
+                            )}
+
+                            {/* Create New Playlist Input */}
+                            {showInput && (
+                                <>
+                                    <Input
+                                        label="New Playlist"
+                                        placeholder="Enter playlist name"
+                                        value={newPlayListName}
+                                        onChangeText={setNewPlayListName}
+                                    />
+                                    <View style={styles.actionButtons}>
+                                        <Button title="Cancel" color="red" onPress={() => {
+                                            setShowInput(false);
+                                            setNewPlayListName('');
+                                        }} />
+                                        {playListCreatingLoading ? (
+                                            <Text style={styles.modalTitle}>Creating...</Text>
+                                        ) : (
+                                            <Button title="Create" onPress={createNewPlayList} />
+                                        )}
+                                    </View>
+                                </>
+                            )}
+
+                            {/* Save Button */}
+                            {/* Save and Cancel Buttons */}
+                            {playList?.length > 0 && (
+                                <View style={styles.actionButtons}>
+                                    <Button title="Save" onPress={handleSave} />
+                                    <Button title="Cancel" color="red" onPress={onClose} />
+                                </View>
+                            )}
+
                         </>
                     )}
                 </View>
@@ -145,6 +176,8 @@ export const PlayListPopUp: React.FC<PlayListPopUpProps> = ({
         </Modal>
     );
 };
+
+export default React.memo(PlayListPopUp);
 
 const styles = StyleSheet.create({
     modalBackground: {
@@ -200,5 +233,16 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         justifyContent: 'space-between',
         marginTop: 10,
+    },
+    createButton: {
+        backgroundColor: '#007bff',
+        padding: 10,
+        borderRadius: 5,
+        alignItems: 'center',
+        marginTop: 10,
+    },
+    createButtonText: {
+        color: 'white',
+        fontWeight: 'bold',
     },
 });

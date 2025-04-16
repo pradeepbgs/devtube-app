@@ -3,6 +3,7 @@ import Ionicons from "@expo/vector-icons/Ionicons";
 import { Image, StyleSheet, View, TouchableOpacity } from "react-native";
 import { useSelector } from "react-redux";
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
+import { Colors } from "@/constant/colors";
 
 
 export default function HomeLayout() {
@@ -158,14 +159,13 @@ export default function HomeLayout() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "black",
+    backgroundColor: Colors.charCoalBlack,
   },
   header: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
     paddingTop: 4,
-    backgroundColor: "black",
   },
   logo: {
     width: 50,

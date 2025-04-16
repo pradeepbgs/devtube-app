@@ -15,20 +15,20 @@ import VideoScreen from "./player";
 import { timeAgo, whenCreated } from "@/utils/timeAgo";
 import axios from "axios";
 import { useSelector } from "react-redux";
-import { API_URI, LIKE_API_URI, VIDEO_API_URI } from "@/utils/api";
-import * as SecureStore from "expo-secure-store";
+import { API_URI, LIKE_API_URI, SUBSCRIBE_API_URI, VIDEO_API_URI } from "@/utils/api";
 import AntDesign from "@expo/vector-icons/AntDesign";
 import EvilIcons from "@expo/vector-icons/EvilIcons";
 import CommentsPage from "../(comments)/comments";
 import { handleBounce } from "@/utils/bounce";
 import { LoadingSpinner } from "@/components/loadSpinner";
 import { PopUp } from "@/components/PopUp";
-import { PlayListPopUp } from "@/components/PlayListPopUp";
+import  PlayListPopUp from "@/components/PlayListPopUp";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import DescriptionPage from "./DescriptionPage";
 import { VideoDetailsT } from "@/types";
 import VideoCard from "@/components/VideoCard";
 import { globalAccessToken } from "@/service/apiService";
+import { Colors } from "@/constant/colors";
 
 const { width } = Dimensions.get("window");
 
@@ -84,20 +84,19 @@ export default function Watchpage() {
     }
     if (!channelId) return;
     // const accessToken = await SecureStore.getItemAsync("accessToken");
-
+    console.log('logging channele id:', channelId)
     try {
-      const response = await axios.post(`${API_URI}/api/v1/subscription/toggle/${channelId}/`, null, {
+      const response = await axios.post(`${SUBSCRIBE_API_URI}/c/${channelId}`, null, {
         headers: { Authorization: `Bearer ${globalAccessToken}` },
         withCredentials: true,
       });
-
-      if (response.data.message === "Subscribed successfully") {
+      if (response.data.message === "subscribed successfully") {
         setVideo((prevVideo: any) => ({
           ...prevVideo,
           isSubscribed: true,
           subscribers: prevVideo?.subscribers + 1,
         }));
-      } else if (response.data.message === "Unsubscribed successfully") {
+      } else if (response.data.message === "unsubscribed successfully") {
         setVideo((prevVideo: any) => ({
           ...prevVideo,
           isSubscribed: false,
@@ -105,7 +104,8 @@ export default function Watchpage() {
         }));
       }
     } catch (error: any) {
-      ToastAndroid.show(`Error toggling subscription`, ToastAndroid.SHORT);
+      console.log("Error toggling subscription:", error?.message)
+      ToastAndroid.show(`Error toggling subscription: ${error?.message}`, ToastAndroid.SHORT);
       // alert(`Error toggling subscription: ${JSON.stringify(error.response?.data)}`);
     }
   };
@@ -191,7 +191,7 @@ export default function Watchpage() {
             style={styles.viewMoreContainer}
           >
             <Text style={styles.viewMore}>
-              {isExpanded ? "...less" : "...more"}
+              {isExpanded ? <Text>...less</Text> : <Text>...more</Text>}
             </Text>
           </TouchableOpacity>
         </Text>
@@ -244,9 +244,11 @@ export default function Watchpage() {
           <EvilIcons name="comment" size={24} color={isCommentOpened ? "#6bd3ff" : "white"} />
         </TouchableOpacity>
       </View>
+
+      {/* popup for playlists */}
       <PlayListPopUp
         userId={localUser?._id}
-        videoId={video?._id}
+        videoId={video?._id as string}
         visible={playlistPopupVisible}
         onClose={() => setPlaylistPopupVisible(false)}
       />
@@ -268,7 +270,9 @@ export default function Watchpage() {
   return (
     <>
       <View style={styles.container}>
-        {loading && LoadingSpinner()}
+        {loading && 
+        LoadingSpinner()
+        }
         <VideoScreen url={video?.url as string} />
 
         <View style={styles.commentContainer}>
@@ -307,12 +311,12 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     width: width,
-    backgroundColor: "black",
+    backgroundColor: Colors.charCoalBlack,
     paddingHorizontal: 2,
   },
   textContainer: {
     padding: 9,
-    backgroundColor: "rgba(0, 0, 0, 0.85)",
+    backgroundColor: Colors.charCoalBlack,
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
     marginTop: -6,

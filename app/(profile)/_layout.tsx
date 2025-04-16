@@ -1,3 +1,4 @@
+import { Colors } from '@/constant/colors';
 import { Stack } from 'expo-router';
 import { StyleSheet, View } from 'react-native';
 
@@ -6,8 +7,9 @@ export default function ProfileLayout() {
     <View style={styles.container}>
       <Stack
         screenOptions={{
-          headerStyle: { backgroundColor: 'black' },
+          headerStyle: { backgroundColor: Colors.charCoalBlack },
           headerTintColor: 'white',
+          animation:'fade'
         }}
       >
         <Stack.Screen name="index" options={{ title: 'Profile', headerShown: true }} />
@@ -22,6 +24,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     height:'auto',
-    backgroundColor: 'black',
+    backgroundColor: Colors.charCoalBlack,
   },
 });

@@ -37,11 +37,12 @@ const styles = StyleSheet.create({
     paddingLeft: 10,
     marginBottom: 10,
     borderRadius: 8,
-    elevation: 3,
-    shadowColor: '#000',
+    // elevation: 3,
+    // shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
+    // height:'100%'
   },
   thumbnail: {
     width: 170,

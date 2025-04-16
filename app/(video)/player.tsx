@@ -1,3 +1,4 @@
+import { Colors } from '@/constant/colors';
 import { useVideoPlayer, VideoView } from 'expo-video';
 import { StyleSheet, View, Dimensions } from 'react-native';
 
@@ -31,6 +32,7 @@ const styles = StyleSheet.create({
   video: {
     width: width, 
     height: (width - 20) * (9 / 16),
-    backgroundColor: 'black',
+    backgroundColor: Colors.charCoalBlack,
+    marginTop:4,
   },
 });

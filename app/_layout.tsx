@@ -10,6 +10,7 @@ import React, { useEffect, useState } from "react";
 import { isTokenExpired } from "@/utils/jwt";
 import axios from "axios";
 import { API_URI, AUTH_API_URI } from "@/utils/api";
+import { Colors } from '@/constant/colors';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -78,13 +79,14 @@ function AppInitializer() {
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="default" 
-      backgroundColor="black" 
+      backgroundColor={Colors.charCoalBlack}
       />
       <Stack
         screenOptions={{
-          headerStyle: { backgroundColor: "black" },
-          headerTintColor: "black",
+          headerStyle: { backgroundColor:Colors.charCoalBlack },
+          headerTintColor: "#121212",
           headerShown: false,
+          animation:'ios_from_right'
         }}
       >
         <Stack.Screen

@@ -18,7 +18,7 @@ export default function CommentsPage({onClose}:{onClose:() => void}) {
 
 const styles = StyleSheet.create({
   container: {
-    marginTop:5,
+    marginTop:10,
     backgroundColor: '#252422',
     borderRadius: 10,
     height:'100%'

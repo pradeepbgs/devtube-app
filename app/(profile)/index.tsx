@@ -25,6 +25,7 @@ import { PopUp } from "@/components/PopUp";
 import Fontisto from '@expo/vector-icons/Fontisto';
 import EvilIcons from '@expo/vector-icons/EvilIcons';
 import { UserDetails, VideoDetailsT } from "@/types";
+import { Colors } from "@/constant/colors";
 
 interface userT {
   avatar?: string,
@@ -115,14 +116,14 @@ export default function Index() {
     
     try {
       const response = await subscribe(parsedUser?._id, globalAccessToken as string)
-      if (response?.message === "Subscribed successfully") {
+      if (response?.message === "subscribed successfully") {
         dispatch(setUser({
           ...user,
           isSubscribed: true,
           subscribers: user?.subscribers + 1
         }))
       }
-      else if (response?.message === "Unsubscribed successfully") {
+      else if (response?.message === "unsubscribed successfully") {
         dispatch(setUser({
           ...user,
           isSubscribed: false,
@@ -144,8 +145,6 @@ export default function Index() {
     fetchData().finally(() => setLoading(false));
   }, []);
 
-  if (loading) return LoadingSpinner();
-
   const handleRefresh = async () => {
     dispatch
     setIsPageRefreshing(true)
@@ -154,6 +153,7 @@ export default function Index() {
     setIsPageRefreshing(false)
   };
 
+  if (loading) return LoadingSpinner();
 
   if (!userDetails) {
     return (
@@ -247,7 +247,7 @@ export default function Index() {
       </View>
       
       <View style={styles.subscriberContainer}>
-      <Text style={styles.statCount}>{user?.subscribers || "0"}</Text>
+      <Text style={styles.statCount}>{user?.subscribersCount || "0"}</Text>
       <Text style={styles.bioText}>Subscribers</Text>
       </View>
               
@@ -368,7 +368,7 @@ export default function Index() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "black",
+    backgroundColor: Colors.charCoalBlack,
     width:width
   },
   coverImage: {

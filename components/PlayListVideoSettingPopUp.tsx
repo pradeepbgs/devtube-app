@@ -1,72 +1,90 @@
-import { StyleSheet, Text, View, TouchableOpacity } from 'react-native';
-import React from 'react';
-import { Modal } from 'react-native-paper';
+import { StyleSheet, Text, View, TouchableOpacity, Animated, Dimensions, Pressable } from 'react-native';
+import React, { useEffect, useRef } from 'react';
 
 interface VideoSettingPopUpProps {
-    videoId: number;
-    visible: boolean;
-    onClose: () => void;
-    onRemove: (id: number) => void;
+  videoId: number;
+  visible: boolean;
+  onClose: () => void;
+  onRemove: (id: number) => void;
 }
 
+const SCREEN_HEIGHT = Dimensions.get('window').height;
+
 const PlayListVideoSettingPopUp: React.FC<VideoSettingPopUpProps> = ({
-    videoId,
-    visible,
-    onClose,
-    onRemove
+  videoId,
+  visible,
+  onClose,
+  onRemove
 }) => {
-    return (
-        <Modal visible={visible} onDismiss={onClose} contentContainerStyle={styles.container}>
-            <View style={styles.popupContainer}>
-                <Text style={styles.title}>Video Options</Text>
-                <TouchableOpacity style={styles.optionButton} onPress={() => onRemove(videoId)}>
-                    <Text style={styles.optionText}>Remove Video from Playlist</Text>
-                </TouchableOpacity>
-                <TouchableOpacity style={styles.optionButton} onPress={onClose}>
-                    <Text style={styles.optionText}>Cancel</Text>
-                </TouchableOpacity>
-            </View>
-        </Modal>
-    );
+  const slideAnim = useRef(new Animated.Value(SCREEN_HEIGHT)).current;
+
+  useEffect(() => {
+    if (visible) {
+      Animated.timing(slideAnim, {
+        toValue: 0,
+        duration: 300,
+        useNativeDriver: true
+      }).start();
+    } else {
+      Animated.timing(slideAnim, {
+        toValue: SCREEN_HEIGHT,
+        duration: 300,
+        useNativeDriver: true
+      }).start();
+    }
+  }, [visible]);
+
+  if (!visible) return null;
+
+  return (
+    <View style={styles.overlay}>
+      <Pressable style={styles.backdrop} onPress={onClose} />
+      <Animated.View style={[styles.container, { transform: [{ translateY: slideAnim }] }]}>
+        <Text style={styles.title}>Video Options</Text>
+        <TouchableOpacity style={styles.optionButton} onPress={() => onRemove(videoId)}>
+          <Text style={styles.optionText}>Remove Video from Playlist</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.optionButton} onPress={onClose}>
+          <Text style={[styles.optionText, { color: 'red' }]}>Cancel</Text>
+        </TouchableOpacity>
+      </Animated.View>
+    </View>
+  );
 };
 
 const styles = StyleSheet.create({
-    container: {
-        backgroundColor: '#242423',
-        borderTopLeftRadius: 12,
-        borderTopRightRadius: 12,
-        padding: 16,
-        position: 'absolute',
-        bottom: 15,
-        width: '100%',
-        borderWidth:1,
-        borderTopColor:'#6c757d',
-
-    },
-    popupContainer: {
-        backgroundColor: '#242423',
-        borderTopLeftRadius: 12,
-        borderTopRightRadius: 12,
-        paddingVertical: 12,
-        paddingHorizontal: 16,
-    },
-    title: {
-        fontSize: 18,
-        fontWeight: 'bold',
-        marginBottom: 12,
-        textAlign: 'center',
-        color: 'white',
-    },
-    optionButton: {
-        paddingVertical: 12,
-        borderTopWidth: 1,
-        borderColor: '#ddd',
-    },
-    optionText: {
-        fontSize: 16,
-        color: '#007AFF',
-        textAlign: 'center',
-    },
+  overlay: {
+    ...StyleSheet.absoluteFillObject,
+    zIndex: 1000,
+    justifyContent: 'flex-end',
+  },
+  backdrop: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0,0,0,0.4)',
+  },
+  container: {
+    backgroundColor: '#242423',
+    padding: 16,
+    borderTopLeftRadius: 16,
+    borderTopRightRadius: 16,
+  },
+  title: {
+    fontSize: 18,
+    color: 'white',
+    fontWeight: '600',
+    textAlign: 'center',
+    marginBottom: 12,
+  },
+  optionButton: {
+    paddingVertical: 14,
+    borderTopWidth: 1,
+    borderColor: '#3a3a3a',
+  },
+  optionText: {
+    fontSize: 16,
+    textAlign: 'center',
+    color: '#007AFF',
+  },
 });
 
-export default PlayListVideoSettingPopUp;
+export default React.memo(PlayListVideoSettingPopUp);

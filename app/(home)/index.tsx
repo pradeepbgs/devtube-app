@@ -3,6 +3,7 @@ import { StyleSheet, View, FlatList, Text, TouchableOpacity, ScrollView , Activi
 import VideoCard from "@/components/VideoCard";
 import axios from "axios";
 import { API_URI } from "@/utils/api";
+import { Colors } from "@/constant/colors";
 
 const suggestionArray = ["All","Ai","LLMs","JavaScript","Programming","Algorithms","Gaming","Videos","Web Development","System Programming"]
 
@@ -153,7 +154,7 @@ export default function Index() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "black",
+    backgroundColor: Colors.charCoalBlack,
     paddingTop:1,
   },
   loadingContainer:{

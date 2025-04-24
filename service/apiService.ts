@@ -1,4 +1,4 @@
-import { API_URI, AUTH_API_URI, PLAYLIST_API_URI, SUBSCRIBE_API_URI, USER_API_URI, VIDEO_API_URI } from '@/utils/api';
+import { API_URI, AUTH_API_URI, COMMENT_API_URI, PLAYLIST_API_URI, SUBSCRIBE_API_URI, USER_API_URI, VIDEO_API_URI } from '@/utils/api';
 import axios from 'axios';
 import * as SecureStore from 'expo-secure-store';
 
@@ -148,4 +148,25 @@ export const uploadVideo = async (formData:BodyT) => {
     throw new Error(error.message || 'Failed to upload video');
   }
   return await response.json() ?? [];
+}
+
+
+export const getVideoComments = async (videoId:string) => {
+  const response = await axios.get(`${COMMENT_API_URI}/${videoId}/`,
+    {withCredentials: true});
+  return response?.data?.data || [];
+}
+
+export const addComment = async (videoId:string, comment:string) => {
+  const accessToken = await SecureStore.getItem('accessToken')
+  if(!accessToken) return
+  const response = await axios.post(`${COMMENT_API_URI}/${videoId}/`,
+    {
+      comment
+    },
+    {
+      headers: { Authorization: `Bearer ${accessToken}` },
+      withCredentials: true
+    });
+  return response?.data || [];
 }

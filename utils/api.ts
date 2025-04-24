@@ -1,5 +1,5 @@
-// export const API_URI='http://192.168.0.105:3000'
-export const API_URI='https://video-backend-3ot2.onrender.com'
+export const API_URI='http://192.168.0.105:3000'
+// export const API_URI='https://video-backend-3ot2.onrender.com'
 
 export const AUTH_API_URI = API_URI + "/api/v1/auth"
 export const USER_API_URI = API_URI + "/api/v1/user"

@@ -8,11 +8,11 @@
     "scheme": "myapp",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
-    "expo":{
+    "expo": {
       "splash": {
-      "image": "./assets/splash.png", 
-      "resizeMode": "contain", 
-      "backgroundColor": "#000000"
+        "image": "./assets/splash.png",
+        "resizeMode": "contain",
+        "backgroundColor": "#000000"
       }
     },
     "ios": {
@@ -22,7 +22,8 @@
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"
-      }
+      },
+      "package": "com.exvillager.devtube"
     },
     "web": {
       "bundler": "metro",

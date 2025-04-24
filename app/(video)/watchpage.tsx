@@ -18,7 +18,6 @@ import { useSelector } from "react-redux";
 import { API_URI, LIKE_API_URI, SUBSCRIBE_API_URI, VIDEO_API_URI } from "@/utils/api";
 import AntDesign from "@expo/vector-icons/AntDesign";
 import EvilIcons from "@expo/vector-icons/EvilIcons";
-import CommentsPage from "../(comments)/comments";
 import { handleBounce } from "@/utils/bounce";
 import { LoadingSpinner } from "@/components/loadSpinner";
 import { PopUp } from "@/components/PopUp";
@@ -29,6 +28,7 @@ import { VideoDetailsT } from "@/types";
 import VideoCard from "@/components/VideoCard";
 import { globalAccessToken } from "@/service/apiService";
 import { Colors } from "@/constant/colors";
+import CommentsPage from "./commentsPage";
 
 const { width } = Dimensions.get("window");
 
@@ -276,7 +276,7 @@ export default function Watchpage() {
         <VideoScreen url={video?.url as string} />
 
         <View style={styles.commentContainer}>
-          {isCommentOpened && <CommentsPage onClose={() => setIsCommentOpened(false)} />}
+          {isCommentOpened && <CommentsPage videoId={video?._id} onClose={() => setIsCommentOpened(false)} />}
         </View>
 
         {/* description  */}
